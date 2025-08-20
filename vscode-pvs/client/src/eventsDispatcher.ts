@@ -247,7 +247,7 @@ export class EventsDispatcher {
         }) => {
             console.log(`[${fsUtils.generateTimestamp()}] `+`[eventsDispatcher] responding request ${serverEvent.typecheckFileResponse} - param: ${desc} `); // #DEBUG            
             // request tccs for the files that typecheck correctly
-            if (desc && desc.response && desc.args) {
+            if (desc && desc.response && desc.response.result && desc.args) {
                 this.client.sendRequest(serverRequest.generateTccs, {
                     fileName: desc.args.fileName,
                     fileExtension: desc.args.fileExtension,
@@ -1002,14 +1002,14 @@ export class EventsDispatcher {
         // desc.theoryName = info.content ? fsUtils.findTheoryName(info.content, info.line) : null;
         // desc.formulaName = desc.theoryName ? fsUtils.findFormulaName(info.content, info.line) : null;
         
-        // vscode-pvs.show-proflite
+        // vscode-pvs.show-prooflite
         context.subscriptions.push(commands.registerCommand("vscode-pvs.show-prooflite", async (resource: string | { path: string } | { contextValue: string }) => {
             const activeEditor: vscode.TextEditor = vscodeUtils.getActivePvsEditor();
             if (!resource && activeEditor?.document?.fileName) {
                 resource = { path: activeEditor.document.fileName };
             }
             if (resource) {
-                const desc: PvsFormula = vscodeUtils.resource2desc(resource);
+                const desc: PvsFormula = vscodeUtils.resource2pvsFormula(resource);
                 // ask the user confirmation of what needs to be done: view existing prooflite, generate prooflite
                 const viewOrGenerate: string[] = [ "View Existing Prooflite", "Generate Prooflite" ];
                 const msg: string = `Show Prooflite for formula ${desc.formulaName}?`;
@@ -1155,7 +1155,7 @@ export class EventsDispatcher {
                 }
             }
 			if (resource) {
-                const desc: FileDescriptor = vscodeUtils.resource2desc(resource);
+                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
                 if (isPvsFile(desc)) {
                     const msg: string = "Start evaluator session?";
                     const selection: string[] = [ "Start PVSio", "Start PVSio-Web" ];
@@ -1224,7 +1224,7 @@ export class EventsDispatcher {
                 }
             }
             if (resource) {
-                let desc: PvsTheory = vscodeUtils.resource2desc(resource);
+                let desc: PvsTheory = vscodeUtils.resource2pvsTheory(resource);
                 if (desc) {
                     if (!desc.theoryName) {
                         const info: { content: string, line: number } = (resource["path"]) ? { content: await fsUtils.readFile(resource["path"]), line: 0 }
@@ -1609,7 +1609,8 @@ export class EventsDispatcher {
                 }
             }
 			if (resource) {
-                const desc: FileDescriptor = vscodeUtils.resource2desc(resource);
+                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
+                
                 if (isPvsFile(desc)) {
                     // show output panel for feedback
                     // commands.executeCommand("workbench.action.output.toggleOutput", true);
@@ -1634,7 +1635,7 @@ export class EventsDispatcher {
                 resource = { path: activeEditor.document.fileName };
             }
 			if (resource) {
-                const pvsFile: FileDescriptor = vscodeUtils.resource2desc(resource);
+                const pvsFile: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
                 if (isPvsFile(pvsFile)) {
                     const req: DumpPvsFilesRequest = { pvsFile };
                     // send dump-pvs-files request to pvs-server
@@ -1665,7 +1666,7 @@ export class EventsDispatcher {
                 resource = { path: activeEditor.document.fileName };
             }
 			if (resource) {
-                const dmpFile: FileDescriptor = vscodeUtils.resource2desc(resource);
+                const dmpFile: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
                 if (isDumpFile(dmpFile)) {
                     // ask the user confirmation before undumping
                     const yesno: string[] = [ "Yes", "No" ];
@@ -1705,7 +1706,7 @@ export class EventsDispatcher {
                 resource = { path: activeEditor.document.fileName };
             }
 			if (resource) {
-                const desc: FileDescriptor = vscodeUtils.resource2desc(resource);
+                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
                 if (desc) {
                     // send show-tccs request to pvs-server
                     this.client.sendRequest(serverRequest.showTccs, desc);
@@ -1725,7 +1726,7 @@ export class EventsDispatcher {
                 resource = { path: activeEditor.document.fileName };
             }
 			if (resource) {
-                const desc: FileDescriptor = vscodeUtils.resource2desc(resource);
+                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
                 if (desc) {
                     // send generate-tccs request to pvs-server
                     this.client.sendRequest(serverRequest.generateTccs, desc);
@@ -1755,7 +1756,7 @@ export class EventsDispatcher {
                 resource = { path: activeEditor.document.fileName };
             }
 			if (resource) {
-                const desc: FileDescriptor = vscodeUtils.resource2desc(resource);
+                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
                 if (desc) {
                     // send parse request to pvs-server
                     this.client.sendRequest(serverRequest.parseFileWithFeedback, desc);
@@ -1772,7 +1773,7 @@ export class EventsDispatcher {
                 resource = { path: activeEditor.document.fileName };
             }
 			if (resource) {
-                let desc = vscodeUtils.resource2desc(resource);
+                let desc = vscodeUtils.resource2fileDescriptor(resource);
                 if (desc) {
                     // send parse request to pvs-server
                     this.client.sendRequest(serverRequest.parseWorkspaceWithFeedback, desc);
@@ -1792,7 +1793,7 @@ export class EventsDispatcher {
                 resource = { path: activeEditor.document.fileName };
             }
 			if (resource) {
-                let desc = vscodeUtils.resource2desc(resource);
+                let desc = vscodeUtils.resource2fileDescriptor(resource);
                 if (desc) {
                     // send parse request to pvs-server
                     this.client.sendRequest(serverRequest.typecheckWorkspaceWithFeedback, desc);
@@ -1809,7 +1810,7 @@ export class EventsDispatcher {
                 resource = { path: activeEditor.document.fileName };
             }
 			if (resource) {
-                let desc = vscodeUtils.resource2desc(resource);
+                let desc = vscodeUtils.resource2fileDescriptor(resource);
                 if (desc) {
                     // send parse request to pvs-server
                     this.client.sendRequest(serverRequest.hp2pvs, desc);
@@ -1830,7 +1831,7 @@ export class EventsDispatcher {
                 }
             }
 			if (resource) {
-                const desc: FileDescriptor = vscodeUtils.resource2desc(resource);
+                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
                 if (isPvsFile(desc)) {
                     // send request to pvs-server
                     this.client.sendRequest(serverRequest.latexFile, desc);
@@ -1852,7 +1853,7 @@ export class EventsDispatcher {
                 const cursorPosition: vscode.Position = activeEditor.selection?.active;
                 const text: string = activeEditor.document.getText();
 
-                const desc: FileDescriptor = vscodeUtils.resource2desc({
+                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor({
                                 theoryName: findTheoryName(text, cursorPosition.line),
                                 formulaName: null,
                                 fileName: fsUtils.getFileName(fname),
@@ -1881,7 +1882,7 @@ export class EventsDispatcher {
                 const cursorPosition: vscode.Position = activeEditor.selection?.active;
                 const text: string = activeEditor.document.getText();
 
-                const desc: FileDescriptor = vscodeUtils.resource2desc({
+                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor({
                                 theoryName: findTheoryName(text, cursorPosition.line),
                                 formulaName: null,
                                 fileName: fsUtils.getFileName(fname),

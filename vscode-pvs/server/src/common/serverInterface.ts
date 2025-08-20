@@ -410,12 +410,12 @@ export declare interface PvsFileDescriptor extends PvsFile {
 	theories: TheoryDescriptor[];
 }
 export declare interface FormulaDescriptor extends PvsFormula {
-	position: Position;
+	position?: Position;
 	status: ProofStatus; // proof status
 	isTcc: boolean;
 }
 export declare interface TheoryDescriptor extends PvsTheory {
-	position: Position; // position of the theory declaration
+	position?: Position; // position of the theory declaration
 	theorems?: FormulaDescriptor[];
 }
 export declare interface GotoFileDescriptor extends FileDescriptor {

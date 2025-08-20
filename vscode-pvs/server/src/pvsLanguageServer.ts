@@ -69,7 +69,7 @@ import * as utils from './common/languageUtils';
 import * as fsUtils from './common/fsUtils';
 import * as path from 'path';
 import { PvsProxy } from './pvsProxy';
-import { PvsResponse, PvsError, ImportingDecl, TypedDecl, FormulaDecl } from './common/pvs-gui';
+import { PvsResponse, PvsError, ImportingDecl, TypedDecl, FormulaDecl, TypecheckResult } from './common/pvs-gui';
 import { PvsPackageManager } from './providers/pvsPackageManager';
 import { PvsErrorManager } from './pvsErrorManager';
 import { ProcessCode } from './pvsProcess';
@@ -327,7 +327,8 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 			const res: PvsResponse = await this.typecheckFile(this.getPvsFile(theory), { progressReporter: (msg: string) => {this.notifyProgressImportantTask({ id: taskId, msg: msg, increment: -1})}});
 			if (res && !res.error) {
 				this.notifyEndImportantTask({ id: taskId, msg: `${theory.fileName}${theory.fileExtension} typechecks successfully!` });
-				const theorems: PvsFormula[] = await this.pvsProxy?.getTheorems(theory);
+				const thInfo: TypecheckResult = res.result.length? res.result[0] : res.result;
+				const theorems: PvsFormula[] = await this.pvsProxy?.getTheorems(this.pvsProxy.typecheckResult2theoryDescriptor(thInfo));
 				this.connection?.sendRequest(serverEvent.getTheoremsResponse, { theorems });
 			} else {
 				if (res && res.error && res.error.data) {

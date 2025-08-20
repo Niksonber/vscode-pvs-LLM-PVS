@@ -1182,10 +1182,56 @@ export function clearClipboard (): void {
     vscode.env.clipboard.writeText("");
 }
 
+export function pvsFormula2fileDescriptor(form: PvsFormula): FileDescriptor {
+    let result : PvsFormula = { ... form };
+    delete result.formulaName;
+    delete result.theoryName;
+    delete result.line;
+    delete result.character;
+    return result;
+}
+
+export function pvsFormula2pvsTheory(form: PvsFormula): PvsTheory {
+    let result : PvsFormula = { ... form };
+    delete result.formulaName;
+    return result;
+}
+
+export function resource2pvsTheory (resource: string | { 
+    fileName?: string, 
+    fileExtension?: string, 
+    contextFolder?: string, 
+    theoryName?: string, 
+    formulaName?: string,
+    path?: string,
+    contextValue?: string
+}): PvsTheory {
+    return pvsFormula2pvsTheory(resource2desc(resource));
+}
+
+export function resource2fileDescriptor (resource: string | { 
+    fileName?: string, 
+    fileExtension?: string, 
+    contextFolder?: string, 
+    theoryName?: string, 
+    formulaName?: string,
+    path?: string,
+    contextValue?: string
+}): FileDescriptor {
+    return pvsFormula2fileDescriptor(resource2desc(resource));
+}
+
+export function resource2pvsFormula (resource: string | { 
+    fileName?: string, fileExtension?: string, contextFolder?: string, theoryName?: string, formulaName?: string,
+    path?: string,
+    contextValue?: string
+}): PvsFormula {
+    return resource2desc(resource);
+}
 /**
  * Utility function, converts a resource to a PvsFormula
  */
-export function resource2desc (resource: string | { 
+function resource2desc (resource: string | { 
     fileName?: string, fileExtension?: string, contextFolder?: string, theoryName?: string, formulaName?: string,
     path?: string,
     contextValue?: string

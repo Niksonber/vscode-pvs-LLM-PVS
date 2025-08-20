@@ -55,7 +55,7 @@
 //import * as xmlrpc from 'xmlrpc';
 import * as WebSocket from 'ws';
 import { PvsProcess, ProcessCode } from "./pvsProcess";
-import { PvsResponse, ParseResult, ShowTCCsResult, PvsError } from "./common/pvs-gui.d";
+import { PvsResponse, ParseResult, ShowTCCsResult, PvsError, TypecheckRequest, TypecheckResult } from "./common/pvs-gui.d";
 import * as fsUtils from './common/fsUtils';
 import * as path from 'path';
 import * as net from 'net';
@@ -289,31 +289,6 @@ export class PvsProxy {
 		if (this.pvsServerProcessStatus === ProcessCode.SUCCESS && this.webSocket) {
 			return new Promise(async (resolve, reject) => {
 				const id = this.get_fresh_id();
-
-				// let params: string[] = []
-				// for(const param of args){
-				// 		if (typeof param === 'string') {
-				// 			params.push(param);
-				// 		} else if(typeof param === 'object' && param !== null) {
-				// 				let theoryFileOrFolder: string;
-				// 				if('contextFolder' in param){
-				// 					if(this.remoteActive) {
-				// 						const rsyncCode = await this.syncPaths(param['contextFolder']);
-				// 						if (rsyncCode === 0) {
-				// 							theoryFileOrFolder = ('theoryName' in param? this.theoryRefRemote(param) : 
-				// 														('fileName' in param? this.fileRefRemote(param) : this.folderRefRemote(param) ));
-				// 						} else
-				// 							throw new Error(`Path Synchronization Failed for ${param['contextFolder']} (error code: ${rsyncCode})`);
-				// 					} else
-				// 						theoryFileOrFolder = ('theoryName' in param? this.theoryRef(param) : 
-				// 														('fileName' in param? this.fileRef(param) : param.contextFolder ));
-				// 					params.push(theoryFileOrFolder);
-				// 					if('formulaName' in param)
-				// 						params.push(param['formulaName']);
-				// 				}
-				// 		}
-				// }
-
 				const params: string[] = await Promise.all(args.map(async param=>{  
 							if (typeof param === 'string') {
 								return param;
@@ -1308,67 +1283,51 @@ export class PvsProxy {
 		return null;
 	}
 
-	// async getProofStatus (formula: PvsFormula): Promise<ProofStatus | null> {
-	// 	const fname: string = fsUtils.desc2fname(formula);
-	// 	const response: PvsResponse = await this.lisp(`(proof-status-at "${fname}" nil 12 "pvs")`);
-	// 	if (response && response.result) {
-	// 		switch (response.result) {
-	// 			case "subsumed":
-	// 			case "simplified":
-	// 			// case "proved - incomplete":
-	// 			// case "proved - by mapping":
-	// 			// case "proved - complete": 
-	// 			case "proved":
-	// 				return "proved";
-	// 			case "unfinished": // proof attempted but failed
-	// 				return "unfinished";
-	// 			case "unchecked":  // proof was successful, but needs to be checked again because of changes in the theories
-	// 				return "unchecked";
-	// 			case "unproved":
-	// 			case "untried": // proof has not been attempted yet
-	// 				return "untried";
-	// 		}
-	// 	}
-	// 	return null;
-	// }
+	public typecheckResult2theoryDescriptor(theory: TypecheckResult): TheoryDescriptor{
+					const fname: string = theory.fileName;
+					const theoryName: string = theory.id;
+					const fileName: string = fsUtils.getFileName(fname);
+					const contextFolder: string = fsUtils.getContextFolder(fname);
+					const fileExtension: string = fsUtils.getFileExtension(fname);
+					let formulas: FormulaDescriptor[] = [];
+					for(const decl of theory.decls){
+						// Omitting axioms and assumptions, at least by now @M3
+						if(decl.kind === "formula" && decl.provable){
+							formulas.push(
+								{ formulaName: decl.id, 
+									status: (decl["proved?"]? "proved" : null), 
+									isTcc: /_TCC\d+$/.test(decl.id),
+									theoryName,
+									fileName, contextFolder, fileExtension
+								});
+						}
+					}
+					return {
+						theoryName,
+						fileName,
+						contextFolder,
+						fileExtension,
+						theorems: formulas
+					};
+	}
 
 	/**
 	 * Returns the import chain for a given theory
 	 * @param desc theory descriptor: context folder, file name, file extension, theory name
 	 */
-	async getImportChain(desc: PvsTheory): Promise<PvsTheory[]> {
+	async getImportChain(desc: PvsTheory): Promise<TheoryDescriptor[]> {
 		let importChain: PvsTheory[] = [];
 		if (desc && desc.theoryName) {
 			// change context
 			await this.changeContext({contextFolder: desc.contextFolder});
 
-			const res: PvsResponse = await this.lisp(`
-	(let ((theoryname "${desc.theoryName}"))
-	(let ((usings (remove-if #'(lambda (th)
-	(or (from-prelude? th)
-	(lib-datatype-or-theory? th)))
-	(collect-theory-usings theoryname nil))))
-	(mapcar (lambda (theory) (cons (format nil "|~a|" (id theory)) (shortname (make-specpath (filename theory))))) (reverse usings))))
-	`);
+			const res: PvsResponse = await this.pvsRequest("collect-theory-usings", [desc]);
+			
 			// console.log(`[${fsUtils.generateTimestamp()}] `+res.result);
 			if (res && res.result) {
-				const regex: RegExp = /\"\|(\w+)\|\"\s*\.\s*\"([^\|]+)\"\)/g;
-				let match: RegExpMatchArray = null;
-				while (match = regex.exec(res.result)) {
-					if (match && match.length > 2) {
-						const fname: string = match[2].trim();
-						if (fname) {
-							const pvsTheory: PvsTheory = {
-								theoryName: match[1].trim(),
-								fileName: fsUtils.getFileName(fname),
-								contextFolder: fsUtils.getContextFolder(fname),
-								fileExtension: fsUtils.getFileExtension(fname)
-							};
-							importChain.push(pvsTheory);
-						}
-					}
+				for(const theory of res.result) {
+					importChain.push(this.typecheckResult2theoryDescriptor(theory));
 				}
-				// console.dir(importChain);
 			}
 		}
 		return importChain;
@@ -1377,40 +1336,17 @@ export class PvsProxy {
 	 * Resolves all theorems, tccs and import chain theorems for the given theory
 	 * @param desc 
 	 */
-	async getTheorems(desc: PvsTheory, opt?: { includeImportChain?: boolean, tccsOnly?: boolean }): Promise<PvsFormula[]> {
+	async getTheorems(desc: TheoryDescriptor, opt?: { includeImportChain?: boolean, tccsOnly?: boolean }): Promise<PvsFormula[]> {
 		opt = opt || {};
 		let ans: PvsFormula[] = [];
 		if (desc) {
-			let theories: PvsTheory[] = (opt.includeImportChain) ? await this.getImportChain(desc) : [desc];
+			let theories: TheoryDescriptor[] = (opt.includeImportChain) ? await this.getImportChain(desc) : [desc];
 			if (theories && theories.length) {
-				for (let i = 0; i < theories.length; i++) {
-					if (!opt.tccsOnly) {
-						const formulaDescriptors: FormulaDescriptor[] = await fsUtils.listTheoremsInFile(fsUtils.desc2fname(theories[i]));
-						if (formulaDescriptors && formulaDescriptors.length) {
-							const theorems: FormulaDescriptor[] = formulaDescriptors.filter(formula => {
-								return formula.theoryName === desc.theoryName;
-							});
-							if (theorems && theorems.length) {
-								ans = ans.concat(theorems);
-							}
-						}
-					}
-					// generate tccs for the given theory
-					const tccsResponse: PvsResponse = await this.generateTccsFile(theories[i]);
-					if (tccsResponse && tccsResponse.result) {
-						const tccsResult: ShowTCCsResult = <ShowTCCsResult>tccsResponse.result;
-						for (let j = 0; j < tccsResult.length; j++) {
-							if (tccsResult[j].id) {
-								ans.push({
-									formulaName: tccsResult[j].id,
-									theoryName: theories[i].theoryName,
-									fileName: theories[i].fileName,
-									contextFolder: theories[i].contextFolder,
-									fileExtension: ".tccs" //theories[i].fileExtension
-								});
-							}
-						}
-					}
+				for(const theory of theories){
+					const thForms = (opt.tccsOnly?
+						theory.theorems.filter((value)=>{return (value.isTcc?value:undefined)}) : 
+						theory.theorems);
+					ans = ans.concat(thForms);
 				}
 			}
 		}

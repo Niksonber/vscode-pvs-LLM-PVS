@@ -1411,7 +1411,7 @@ export class VSCodePvsWorkspaceExplorer extends Explorer { //implements TreeData
 				cancellable: true
 			}, async (progress, token) => {
 				// show initial dialog with spinning progress
-				const message: string = `Resolving importchain for theory ${desc.theoryName}`;
+				const message: string = `Resolving import chain for theory ${desc.theoryName}`;
 				progress.report({ increment: -1, message });
 
 				const formulas: PvsFormula[] = await this.getImportChainTheorems(desc);

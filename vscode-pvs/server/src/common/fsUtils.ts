@@ -2065,15 +2065,29 @@ export type TheorySummary = {
  */
 export function makeTheorySummary (desc: TheorySummary): string {
 	if (desc?.theoryName) {
-		const header: string = desc.tccsOnly ? "TCCs summary" : "Proof summary";
-		let ans: string = `${header} for theory ${desc.theoryName}\n`;
+		let ans: string = `***\n*** Processing theory ${desc.theoryName} (${generateTimestamp()})${desc.tccsOnly?"\n*** TCCs only":""}\n*** `;
 		let nProved: number = 0;
 		let totTime: number = 0;
-		let importChainFlag: boolean = false;
+
+		let currentTheory: string;
+		let thFormulas: number = 0;
+		let thAttempted: number = 0;
+		let thSucceeded: number = 0;
+		let thTime: number = 0;
+
 		for (let i = 0; i < desc.theorems.length; i++) {
-			if (desc.theorems[i].theoryName !== desc.theoryName && !importChainFlag) {
-				importChainFlag = true;
-				ans += `\n\t%-- importchain`;
+			if (desc.theorems[i].theoryName !== currentTheory) {
+				if (currentTheory) {
+					ans += `\n   Theory totals: ${thFormulas} formulas, ${thAttempted} attempted, ${thSucceeded} succeeded (${+(thTime / 1000).toFixed(3)} s)`;
+				}
+				nProved += thSucceeded;
+				totTime += thTime;
+				thFormulas  = 0;
+				thAttempted = 0;
+				thSucceeded = 0;
+				thTime      = 0;
+				currentTheory = desc.theorems[i].theoryName;
+				ans += `\n\n Proof summary for theory ${currentTheory}`;
 			}
 			const formulaName: string = desc.theorems[i].formulaName;
 			const status: ProofStatus = desc.theorems[i].status;
@@ -2082,12 +2096,20 @@ export function makeTheorySummary (desc: TheorySummary): string {
 			const points: number = (64 - formulaName.length) > 0 ? 64 - formulaName.length : 0;
 			const spaces: number = (20 - status.length) > 0 ? 20 - status.length : 0;
 
-			if (isProved(status)) { nProved++; }
-			totTime += ms;
+			thFormulas++;
+			thAttempted++;
+			if (isProved(status)) { thSucceeded++; }
+			thTime += ms;
 
-			ans += `\n\t${formulaName}` + ".".repeat(points) + getIcon(status) + " " + status + " ".repeat(spaces) + `(${(+ms / 1000)} s)`;
+			ans += `\n   ${formulaName}` + ".".repeat(points) + getIcon(status) + " " + status + " ".repeat(spaces) + `(${(+ms / 1000)} s)`;
 		}
-		ans += `\n\nTheory ${desc.theoryName} totals: ${desc.total} formulas, ${desc.theorems.length} attempted, ${nProved} succeeded (${+(totTime / 1000).toFixed(3)} s)`;
+		ans += `\n   Theory totals: ${thFormulas} formulas, ${thAttempted} attempted, ${thSucceeded} succeeded (${+(thTime / 1000).toFixed(3)} s)`;
+		nProved += thSucceeded;
+		totTime += thTime;
+
+		if(totTime > thTime)
+			ans += `\n\nGrand totals: ${desc.total} formulas, ${desc.theorems.length} attempted, ${nProved} succeeded (${+(totTime / 1000).toFixed(3)} s)`;
+
 		return ans;
 	}
 	return null;

@@ -152,6 +152,11 @@ export interface PvsError {
   };
   [k: string]: any;
 }
+export interface TypecheckResult {
+  id: string,
+  fileName: string,
+  decls: [ ImportingDecl | FormulaDecl | TypedDecl ]
+}
 /**
  * An non-error response
  */
@@ -166,7 +171,8 @@ export interface PvsResult {
     | NamesInfoResult
     | FindDeclarationResult
     | LispResult
-    | ShowTCCsResult; // TODO: update json schema
+    | ShowTCCsResult
+    | TypecheckRequest; // TODO: update json schema
   [k: string]: any;
 }
 export interface HelpResult {
