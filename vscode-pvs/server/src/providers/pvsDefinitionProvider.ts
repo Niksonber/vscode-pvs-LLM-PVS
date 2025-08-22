@@ -105,7 +105,7 @@ export class PvsDefinitionProvider {
 				return await this.findSymbolDefinitionInTheory(theory, symbolName, position);
 			}
 			// .pvs file
-			const content: string = await fsUtils.readFile(fname);
+			const content: string = fsUtils.readFile(fname);
 			const theoryName: string = fsUtils.findTheoryName(content, position?.line);
 			if (theoryName) {
 				const theory: PvsTheory = {
@@ -183,15 +183,6 @@ export class PvsDefinitionProvider {
 					} = declarations[i];
 					if (info) {
 						let fname: string = info.filename;
-						// FIXME: pvs-server does not include path when the file is in the current context
-						if (fname && fname.indexOf("/") < 0) {
-							// add contextFolder to fname, check if this is the pvslog folder (if so, remove /pvsbin)
-							let contextFolder: string = theory.contextFolder;
-							if (contextFolder.endsWith("/pvsbin") || contextFolder.endsWith("pvsbin/")) {
-								contextFolder = contextFolder.split("/").slice(0, -1).join("/");
-							}
-							fname = path.join(contextFolder, fname);
-						}
 						let comment: string = "";
 						if (fname && info.type === "theorem" || info.type === "lemma") {
 							// check if the theorem has been proved, and if so add the proof status to the tooltip
@@ -247,7 +238,7 @@ export class PvsDefinitionProvider {
 				const start: Position = (desc && desc.length) ? desc[0].position : { line: 0, character: 0 };
 				let decl: string = "";
 				if (desc && desc.length) {
-					decl = await fsUtils.readFile(fname);
+					decl = fsUtils.readFile(fname);
 					decl = decl.split("\n").slice(start.line - 1).join("\n");
 				}
 				const def: PvsDefinition = {

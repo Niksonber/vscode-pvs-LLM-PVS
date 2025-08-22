@@ -2065,7 +2065,7 @@ export type TheorySummary = {
  */
 export function makeTheorySummary (desc: TheorySummary): string {
 	if (desc?.theoryName) {
-		let ans: string = `***\n*** Processing theory ${desc.theoryName} (${generateTimestamp()})${desc.tccsOnly?"\n*** TCCs only":""}\n*** `;
+		let ans: string = `*** Processing theory ${desc.theoryName} (${generateTimestamp()})${desc.tccsOnly?" -- TCCs only\n":"\n"}`;
 		let nProved: number = 0;
 		let totTime: number = 0;
 

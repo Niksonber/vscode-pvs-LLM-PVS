@@ -1779,6 +1779,7 @@ export class PvsProxy {
 	}
 
 	async findTheory(theoryName: string): Promise<PvsResponse> {
+		// #TODO create a defrequest for this instead @M3
 		const ans: PvsResponse = await this.lisp(`(let ((th (get-theory "${theoryName}")))
 	(when th
 	(format nil "~a~a.pvs" (context-path th) (filename th))))`);
