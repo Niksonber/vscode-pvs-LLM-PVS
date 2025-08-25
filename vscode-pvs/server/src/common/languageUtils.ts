@@ -1217,13 +1217,17 @@ export const icons: {
 	bang: string,
 	snowflake: string,
 	sparkles: string,
-	whitecircle: string
+	whitecircle: string,
+    crossMark: string,
+    ballotBoxWithCheck: string 
 } = {
 	checkmark: "✅",
 	bang : "❗",
+    crossMark : "❌",
 	snowflake : "❄️",
 	sparkles: "✨",
-	whitecircle: "⚪"
+	whitecircle: "⚪",
+    ballotBoxWithCheck : "☑️"
 };
 /**
  * Utility function, returns the icon associated to the given proof status
@@ -1238,12 +1242,13 @@ export function getIcon (proofStatus: ProofStatus): string {
 		case "proved":
 			return icons.checkmark;
 		case "unfinished": // proof attempted but failed
-			return icons.bang;
+			return icons.crossMark;
 		case "unchecked":  // proof was successful, but needs to be checked again because of changes in the theories
-			return icons.snowflake;
+			return icons.ballotBoxWithCheck;
 		case "unproved":
+			return icons.checkmark;
 		case "untried": // proof has not been attempted yet
-			return icons.sparkles;
+			return icons.ballotBoxWithCheck;
 	}
 }
 /**

@@ -952,14 +952,14 @@ export class PvsProofExplorer {
 			}
 
 			// check if we have reached a dead end where the proof has stopped
-			if (this.ghostNode.isActive() && !branchCompleted && desc.lastSequent) {
+			// @M3 or if the server reported a timeout (#FIXME this should be informed in a more structured way, perhaps a dedicated field?)
+			if ( (this.ghostNode.isActive() && !branchCompleted && desc.lastSequent) 
+				|| (desc.proofState.commentary?.length && (<string[]>desc.proofState.commentary).some(el => el.includes('Apply timed out')))) {
 				// and so we need to stop the execution
 				this.runningFlag = false;
 				if (this.autoRunFlag) {
 					// mark proof as unfinished
-					if (this.root.getProofStatus() !== "untried") {
-						this.root.setProofStatus("unfinished");
-					}
+					this.root.setProofStatus("unfinished");
 					// quit proof and update proof status
 					await this.quitProofAndSave({ jprfOnly: true });
 				} else {
@@ -3664,7 +3664,8 @@ class RootNode extends ProofItem {
 		return this.initialProofStatus !== this.proofStatus;
 	}
 	setProofStatus(proofStatus: ProofStatus): void {
-		if (proofStatus) {
+		// @M3 'untried' is only acceptable if there's no proofStatus
+		if (proofStatus && (!this.proofStatus || proofStatus !== 'untried')) {
 			this.proofStatus = proofStatus;
 			const evt: ProofEditDidUpdateProofStatus = {
 				action: "did-update-proof-status",
