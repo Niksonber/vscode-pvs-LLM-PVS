@@ -59,6 +59,9 @@ export function getColor (color: PvsColor, theme: XTermColorTheme): PvsColor {
 		case PvsColor.gray: {
 			return theme === "dark" ? PvsColor.gray : PvsColor.black;
 		}
+		case PvsColor.white: {
+			return theme === "dark" ? PvsColor.white : PvsColor.darkgray;
+		}
 		default: {
 			break;
 		}
