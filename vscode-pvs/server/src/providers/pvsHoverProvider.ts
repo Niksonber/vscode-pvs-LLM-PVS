@@ -38,7 +38,7 @@
 
 import { PvsDefinition } from '../common/serverInterface';
 import { Position, CancellationToken, Hover } from 'vscode-languageserver';
-import { MarkedString } from 'vscode-languageserver-types';
+import { MarkupKind } from 'vscode-languageserver-types';
 import { PvsDefinitionProvider } from "./pvsDefinitionProvider";
 import * as language from "../common/languageKeywords";
 import * as fsUtils from '../common/fsUtils';
@@ -65,8 +65,8 @@ export class PvsHoverProvider {
 	 */
 	async provideHover (desc: { txt: string, uri: string, position: Position }, token?: CancellationToken): Promise<Hover> {
 		if (desc && desc.txt && desc.uri && desc.position) {
-			let contents: MarkedString[] = [];
-			// load the text preceeding the current position and check if this is a comment
+			let contents: string[] = [];
+			// load the text preceding the current position and check if this is a comment
 			const line: string = fsUtils.getText(desc.txt, {
 				start: { line:desc.position.line },
 				end: { line: desc.position.line }
@@ -107,18 +107,14 @@ export class PvsHoverProvider {
 						const expression: string = matchInfo[4];
 						const fname: string = fsUtils.desc2fname({ ...fsUtils.fname2desc(desc.uri), fileExtension: ".pvs" });
 						const tccType: string = txt.substring(txt.indexOf("%") + 1, txt.indexOf("TCC"));
-						const pvsFile: MarkedString = `[${fsUtils.getFileName(fname, { keepExtension: true })} (Ln ${line}, Col ${col})](file://${fname}#L${line}:${col})`
-						contents.push(`${tccType} TCC generated ${expression?.length ? ` for \`${expression}\`` : ""}`);
-						contents.push(`at ${pvsFile}`);
-						const pvsFileContent: string = await fsUtils.readFile(fname);
+						contents.push(`${tccType} TCC generated ${expression?.length ? ` for \`${expression}\`` : ""}\nat [${fsUtils.getFileName(fname, { keepExtension: true })} (Ln ${line}, Col ${col})](file://${fname}#L${line}:${col})`);
+						const pvsFileContent: string = fsUtils.readFile(fname);
 						const pvsFileLines: string[] = pvsFileContent?.split("\n");
 						if (pvsFileLines?.length > line - 1) {
 							const pvsExpression: string = pvsFileLines[line - 1];
 							if (pvsExpression) {
-								contents.push({
-									language: "pvs",
-									value: pvsExpression.replace(/\t/g, " ") + `\n${col ? " ".repeat(col) : ""}${"^".repeat(expression?.length || 1)}`
-								});
+								contents.push(
+									`\`\`\`pvs\n${ pvsExpression.replace(/\t/g, " ")}\n${col ? " ".repeat(col) : ""}${"^".repeat(expression?.length || 1)}\n\`\`\``);
 							}
 						}
 					}
@@ -137,10 +133,7 @@ export class PvsHoverProvider {
 						contents.push(def.error.message);
 					} else {
 						if (def.comment) {
-							contents.push({
-								value: def.comment,
-								language: "pvs"
-							});
+							contents.push(`\`\`\`pvs\n${def.comment}\n\`\`\``);
 						}
 						if (definitions?.length > 1) {
 							// const uri: string = (document.uri.startsWith("file://")) ? document.uri : `file://${document.uri}`;
@@ -151,16 +144,12 @@ export class PvsHoverProvider {
 						if (def?.symbolTheory && def?.symbolDeclaration) {
 							if (def?.symbolDeclarationRange && def?.symbolDeclarationFile) {
 								const fileName: string = fsUtils.getFileName(def?.symbolDeclarationFile);
-								const link: MarkedString = // encoded as a markdown string
-									`[${fileName} (Ln ${def.symbolDeclarationRange.start.line}, Col ${def.symbolDeclarationRange.start.character})]`
-									+ `(file://${def.symbolDeclarationFile}#L${def.symbolDeclarationRange.start.line})`;
-									// + ", Col " + desc.symbolDeclarationRange.start.character + ")";
+								const link: string = // encoded as a markdown string
+								  `[${fileName} (Ln ${def.symbolDeclarationRange.start.line}, Col ${def.symbolDeclarationRange.start.character})](${encodeURI("file://"+def.symbolDeclarationFile)}#L${def.symbolDeclarationRange.start.line})`;
+									;
 								contents.push(link);
 							}
-							const content: MarkedString = {
-								value: def?.symbolDeclaration,
-								language: "pvs"
-							};
+							const content: string = `\`\`\`pvs\n${def?.symbolDeclaration}\n\`\`\``							
 							contents.push(content);
 						}
 					}
@@ -168,11 +157,14 @@ export class PvsHoverProvider {
 			}
 			// if not definitions was found, say so in the tooltip
 			if (contents?.length === 0 && ans?.symbolName) {
-				const link: MarkedString = `No definition found for [${ans.symbolName}](file://${desc.uri}#L${desc.position.line + 1})`;
+				const link: string = ""; 
+				 // `No definition found for [${ans.symbolName}](${decodeURI("file://"+desc.uri)}#L${desc.position.line + 1})`;
 				contents.push(link);
 			}
 			return {
-				contents,
+				contents: { kind: MarkupKind.Markdown,
+										value: contents.join("\n\n")
+				 					},
 				range: { start: desc.position, end: desc.position } // the hover is located at the mouse position
 			};
 		}
