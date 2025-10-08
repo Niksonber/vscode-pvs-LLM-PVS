@@ -488,7 +488,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 			await this.pvsProxy.evaluateInPvsIoSession({sessionId: pvsIoStartResponse.result.id, expr: "quit", evaluateAsLisp: false});
 			this.connection?.sendNotification(serverRequest.evalExpression, { req, response });
 		} else
-				this.connection?.sendNotification(serverRequest.evalExpression, { req, pvsIoStartResponse });
+				this.connection?.sendNotification(serverRequest.evalExpression, { req, response: pvsIoStartResponse });
 	}
 	/**
 	 * Evaluator command handler -- this is used during interactive pvsio sessions
@@ -778,7 +778,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 				if (response) {
 					if (response.result) {
 						const fname: string = fsUtils.desc2fname(file);
-						this.updateDiags(fname, { pvsResponse: response, isTypecheckError: true });
+						this.updateDiags(fname, { pvsResponse: response, isTypecheckError: false });
 						// this.diags[fname] = {
 						// 	pvsResponse: response,
 						// 	isTypecheckError: true
@@ -2628,7 +2628,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 			const isEnabled: boolean = !!(await this.connection?.workspace.getConfiguration("pvs.serviceProvider.hover"));
 			if (this.hoverProvider && isEnabled) {
 				// const isEnabled = await this.connection?.workspace.getConfiguration("pvs").settings.hoverProvider;
-				const uri: string = args.textDocument.uri;
+				const uri: string = decodeURI(args.textDocument.uri);
 				if (fsUtils.isPvsFile(uri) && this.hoverProvider) {
 					const document: TextDocument = this.documents?.get(args?.textDocument.uri);
 					const txt: string = document?.getText() || await this.readFile(uri);

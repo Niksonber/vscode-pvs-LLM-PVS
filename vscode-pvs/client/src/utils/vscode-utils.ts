@@ -586,9 +586,31 @@ export async function openWorkspace (): Promise<void> {
     }
 }
 /**
- * Opens a file in the editor
+ * Tries to open a file in a VSCode panel
+ * @param fname name of the file to be opened
+ * @returns true on success, false otherwise
  */
-export async function openFile (fname: string, opt?: { selection?: vscode.Range }): Promise<boolean> {
+export async function openFile(fname: string) : Promise<boolean> {
+    if (fname) {
+        const fileUri: vscode.Uri = vscode.Uri.file(fname);
+        vscode.commands.executeCommand('vscode.open', fileUri, vscode.ViewColumn.Beside).then(
+            () => {
+                vscode.window.showInformationMessage('Image opened successfully!');
+                return true;
+            },
+            (err) => {
+                vscode.window.showErrorMessage(`Failed to open image: ${err.message}`);
+                return false;
+            }
+        );
+        return true;
+    }
+    return false;
+}
+/**
+ * Opens a text file in the editor
+ */
+export async function openTextFile (fname: string, opt?: { selection?: vscode.Range }): Promise<boolean> {
     opt = opt || {};
     if (fname) {
         const fileUri: vscode.Uri = vscode.Uri.file(fname);

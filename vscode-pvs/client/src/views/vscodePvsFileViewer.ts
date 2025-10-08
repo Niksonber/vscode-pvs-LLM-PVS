@@ -127,7 +127,7 @@ export class VSCodePvsFileViewer {
                     this.openAsMarkdownPreview(desc);
                 } else if (fsUtils.isPvsFile(desc)) {
                     vscodeUtils.openPvsFile(desc);
-                } else if (fsUtils.isAdobePdfFile(desc)) {
+                } else if (fsUtils.isAdobePdfFile(desc) || fsUtils.isImageFile(desc)) {
                     this.openWithExternalApp(desc); // async call
                 } else {
                     // create webview
@@ -262,7 +262,7 @@ export class VSCodePvsFileViewer {
         const message: string = opt?.message || `Open ${file}?`;
         const ans: vscodeUtils.YesCancel = await vscodeUtils.showYesCancelDialog(message);
         if (ans === "yes") {
-            return await vscodeUtils.openFile(fsUtils.desc2fname(fdesc));
+            return await vscodeUtils.openTextFile(fsUtils.desc2fname(fdesc));
         }
         return false;
     }

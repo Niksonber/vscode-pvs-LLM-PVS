@@ -62,6 +62,7 @@ import { VSCodePvsXTerm } from './views/vscodePvsXTerm';
 import { XTermColorTheme } from './common/colorUtils';
 import { getActivePvsEditor, registerDevContainerCommands, setDevContainerConfig, setRuntimeEnvContext } from './utils/vscode-utils';
 import { VSCodePvsFileViewer } from './views/vscodePvsFileViewer';
+import { VSCodePvsPathEvaluator } from './views/vscodePvsPathEvaluator';
 
 const server_path: string = path.join('server', 'out', 'pvsLanguageServer.js');
 const AUTOSAVE_INTERVAL: number = 10000; //ms Note: small autosave intervals (e.g., 1sec) create an unwanted scroll effect in the editor (the current line is scrolled to the top)
@@ -129,6 +130,7 @@ export class PvsLanguageClient { //implements vscode.Disposable {
 	 * Indicates if it was already been suggested to the user to get NASALib
 	 */
 	protected alreadySuggestedNASALib: boolean = false;
+	protected pathEvaluator: VSCodePvsPathEvaluator;
 
 	/**
 	 * Internal function, returns the current pvs path, as indicated in the configuration file
@@ -455,6 +457,7 @@ export class PvsLanguageClient { //implements vscode.Disposable {
 			this.search.activate(this.context);
 			this.fileViewer = new VSCodePvsFileViewer(this.client);
 			this.fileViewer.activate(this.context);
+			this.pathEvaluator = new VSCodePvsPathEvaluator(this.client, this.fileViewer);
 			
 			this.pvsioweb = new VSCodePvsioWeb(this.client);
 			this.pvsioweb.activate(this.context);
@@ -482,7 +485,8 @@ export class PvsLanguageClient { //implements vscode.Disposable {
 				plotter: this.plotter,
 				search: this.search,
 				pvsioweb: this.pvsioweb,
-				fileViewer: this.fileViewer
+				fileViewer: this.fileViewer,
+				pathEvaluator: this.pathEvaluator
 			});
 			this.eventsDispatcher.activate(context);
 			

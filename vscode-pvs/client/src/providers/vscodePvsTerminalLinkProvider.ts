@@ -124,7 +124,7 @@ export class VSCodePvsTerminalLinkProvider implements TerminalLinkProvider {
                                 new Position(range.start.line - 1, range.start.character),
                                 new Position(range.end.line - 1, range.end.character),
                             );
-                            vscodeUtils.openFile(fname, { selection });
+                            vscodeUtils.openTextFile(fname, { selection });
                         }
                     }
                 }

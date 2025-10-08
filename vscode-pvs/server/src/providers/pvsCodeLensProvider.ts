@@ -400,6 +400,41 @@ export class PvsCodeLensProvider {
                 }
             }
 
+            // vscode-pvs.open-path-expression
+            if (fileExtension === ".pvs") {
+                const pathExpressionPattern: RegExp = /([\p{L}\S][\p{L}\d\S]+)\s*(?:\[([\w\W\s]+)\])?\s*:\s*Path/ug;
+                while (match = pathExpressionPattern.exec(content)) {
+                    if (match.length > 1 && match[1]) {
+                        const formulaName: string = match[1];
+
+                        // the following can be done in the resolve if necessary for performance reasons
+                        const docUp: string = content.slice(0, match.index + formulaName.length);
+                        const lines: string[] = docUp.split("\n");
+                        const line: number = lines.length - 1;
+                        const character: number = lines[lines.length - 1].indexOf(match[1]);
+                        
+                        if (fileName) {
+                            const args: { path: string, expr: string } = {
+                                path: document.uri,
+                                expr: formulaName
+                            };
+                            const range: Range = {
+                                start: { line, character }, 
+                                end: { line, character: character + formulaName.length }
+                            };
+                            codeLens.push({
+                                range,
+                                command: {
+                                    title: "eval-and-open",
+                                    command: "vscode-pvs.open-path-expression",
+                                    arguments: [ args ]
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
             // quick-open | preview-theory-as-markdown
             if (fileExtension === ".pvs") {
                 const regexp: RegExp = new RegExp(utils.markdownRegexp);

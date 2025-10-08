@@ -632,6 +632,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
                 }
                 this.showPrompt();
                 this.showWelcomeMessage();
+                commands.executeCommand("vscode-pvs.ready");
             }
         }
     }

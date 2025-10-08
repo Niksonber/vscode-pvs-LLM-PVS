@@ -75,6 +75,7 @@ import { VSCodePvsFileViewer } from "./views/vscodePvsFileViewer";
 import * as fs from 'fs';
 import * as path from 'path';
 import { log } from "console";
+import { VSCodePvsPathEvaluator } from "./views/vscodePvsPathEvaluator";
 
 // FIXME: use Backbone.Model
 export class EventsDispatcher {
@@ -102,6 +103,7 @@ export class EventsDispatcher {
     protected NOTIFICATION_TIMEOUT: number = 2000; // 2sec
 
     protected pvsFailureHandlers: Array<(params: any) => void> = [];
+    protected pathEvaluator: VSCodePvsPathEvaluator;
 
     constructor (client: LanguageClient, handlers: {
         statusBar: VSCodePvsStatusBar,
@@ -118,7 +120,8 @@ export class EventsDispatcher {
         plotter: VSCodePvsPlotter,
         search: VSCodePvsSearch,
         pvsioweb: VSCodePvsioWeb,
-        fileViewer: VSCodePvsFileViewer
+        fileViewer: VSCodePvsFileViewer,
+        pathEvaluator: VSCodePvsPathEvaluator
     }) {
         this.client = client;
         this.statusBar = handlers.statusBar;
@@ -146,6 +149,7 @@ export class EventsDispatcher {
         this.search = handlers.search;
         this.pvsIoWeb = handlers.pvsioweb;
         this.fileViewer = handlers.fileViewer;
+        this.pathEvaluator = handlers.pathEvaluator;
     }
 	activate (context: ExtensionContext): void {
         // -- handlers for server responses
@@ -1099,7 +1103,7 @@ export class EventsDispatcher {
                     const fileName: string = fsUtils.getFileName(fname);
                     const fileExtension: string = fsUtils.getFileExtension(fname);
                     const line: number = activeEditor?.selection?.active?.line || 0;
-                    const fileContent: string = await fsUtils.readFile(fname);
+                    const fileContent: string = fsUtils.readFile(fname);
                     const theoryName: string = fsUtils.findTheoryName(fileContent, line);
                     req = {
                         contextFolder,
@@ -1203,6 +1207,45 @@ export class EventsDispatcher {
             }
         }));
 
+        // evaluate expression and open
+        context.subscriptions.push(commands.registerCommand("vscode-pvs.open-path-expression", async (resource: {
+            path: string, expr: string 
+        }) => {
+            const activeEditor: vscode.TextEditor = vscodeUtils.getActivePvsEditor();
+            if (resource) {
+                let desc: PvsTheory = vscodeUtils.resource2pvsTheory(resource);
+                if (desc) {
+                    if (!desc.theoryName) {
+                        const info: { content: string, line: number } = (resource["path"]) ? { content: fsUtils.readFile(resource["path"]), line: 0 }
+                            : { content: activeEditor?.document?.getText(), line: activeEditor?.selection?.active?.line };
+                        const theoryName: string = fsUtils.findTheoryName(info.content, info.line);
+                        desc.theoryName = theoryName;
+                    }
+                    if (desc.theoryName) {
+                        const selection: Selection = activeEditor?.selection;
+                        const expr: string = resource["expr"] || activeEditor?.document?.getText(selection);
+                        if (expr) {
+                            const request: EvalExpressionRequest = {
+                                contextFolder: desc.contextFolder,
+                                fileName: desc.fileName,
+                                fileExtension: desc.fileExtension,
+                                theoryName: desc.theoryName,
+                                expr
+                            };
+                            this.pathEvaluator.evaluateAndOpen(request);
+                        }
+                    } else {
+                        vscodeUtils.showErrorMessage(`Error while trying to invoke open-path-expression (could not identify theory name, please check that the file typechecks correctly)`);
+                    }
+                } else {
+                    console.error("[vscode-events-dispatcher] Error: open-path-expression invoked over an unknown resource", resource);
+                }
+            } else {
+                console.error("[vscode-events-dispatcher] Error: open-path-expression invoked with null resource", resource);
+            }
+        }));
+
+
         // pvsio-plot
         context.subscriptions.push(commands.registerCommand("vscode-pvs.plot-expression", async (resource: string | {
             path: string, expr?: string 
@@ -1227,7 +1270,10 @@ export class EventsDispatcher {
                 let desc: PvsTheory = vscodeUtils.resource2pvsTheory(resource);
                 if (desc) {
                     if (!desc.theoryName) {
-                        const info: { content: string, line: number } = (resource["path"]) ? { content: await fsUtils.readFile(resource["path"]), line: 0 }
+                        const possibleContent = activeEditor?.document?.getText();
+                        const info: { content: string, line: number } = // (resource["path"]) 
+                        !possibleContent
+                        ? { content: fsUtils.readFile(resource["path"]), line: 0 }
                             : { content: activeEditor?.document?.getText(), line: activeEditor?.selection?.active?.line };
                         const theoryName: string = fsUtils.findTheoryName(info.content, info.line);
                         desc.theoryName = theoryName;

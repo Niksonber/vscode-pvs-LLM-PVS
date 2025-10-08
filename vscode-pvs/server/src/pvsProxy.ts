@@ -2417,7 +2417,7 @@ export class PvsProxy {
 
 			let currentAttempt = 0
 			const intervalId = setInterval(() => {
-				console.log(`[${fsUtils.generateTimestamp()}] `+`[waitForOpenConnection] waiting for ${JSON.stringify(ws)}`);
+				console.log(`[${fsUtils.generateTimestamp()}] `+`[waitForOpenConnection] waiting for ${ws}`);
 				if (ws.readyState === WebSocket.OPEN) {
 					clearInterval(intervalId);
 					resolve();

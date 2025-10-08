@@ -128,7 +128,7 @@ export class VSCodePvsPlotter {
                     response: PvsResponse
                 }) => {
                     var data: string = desc?.response.result?.pvsResult;
-                    const errorMsg: string = desc?.response.result?.errOut || desc?.response.result?.stdOut || desc?.response.error;
+                    const errorMsg: string = desc?.response.result?.errOut || desc?.response.result?.stdOut || desc?.response.error?.data;
                     // remove output prompts and new lines @M3
                     data = data?.replace(/\n/g, '').replace(/==>/g, '');
                     // update plot
