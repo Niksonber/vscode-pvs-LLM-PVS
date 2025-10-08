@@ -385,6 +385,9 @@ export class FormulaItem extends TreeItem {
 			// dark: Uri.file(path.join(__dirname, "..", "..", "..", "icons", "svg-sparkles.svg"))
 			light: Uri.file(path.join(__dirname, "..", "..", "..", "icons", "svg-cross-mark-gray.svg")),
 			dark: Uri.file(path.join(__dirname, "..", "..", "..", "icons", "svg-cross-mark-gray.svg"))
+		} : (icon === utils.icons.crossMark) ? {
+			light: Uri.file(path.join(__dirname, "..", "..", "..", "icons", "svg-cross-mark.svg")),
+			dark: Uri.file(path.join(__dirname, "..", "..", "..", "icons", "svg-cross-mark.svg"))
 		} : (icon === utils.icons.whitecircle) ? {
 			light: Uri.file(path.join(__dirname, "..", "..", "..", "icons", "svg-gray-circle.svg")),
 			dark: Uri.file(path.join(__dirname, "..", "..", "..", "icons", "svg-white-circle.svg"))
@@ -855,6 +858,7 @@ export class VSCodePvsWorkspaceExplorer extends Explorer { //implements TreeData
 	}
 	/**
 	 * Opens a context folder and adds it to file explorer
+	 * TODO deprecate @M3
 	 */
 	async openWorkspace (): Promise<void> {
 		// we need to send a clearWorkspace command to the server otherwise pvs may indicate parse errors if theories with the same name have been defined in the previous workspace
@@ -1531,7 +1535,7 @@ export class VSCodePvsWorkspaceExplorer extends Explorer { //implements TreeData
 			const fname: string = fsUtils.desc2fname(summaryFile);
 
 			// check if summary file exists and if it contains the summary for the requested theory
-			const fileExists: boolean = await fsUtils.fileExists(fname);
+			const fileExists: boolean = fsUtils.fileExists(fname);
 			let theorySummaryExists: boolean = false;
 			if (fileExists) {
 				theorySummaryExists = await fsUtils.containsSummary(fname, desc.theoryName);
@@ -1652,7 +1656,7 @@ export class VSCodePvsWorkspaceExplorer extends Explorer { //implements TreeData
 			if (!desc.theoryName || !desc.formulaName) {
 				const info: { content: string, line: number } = {
 					content: desc.fileContent !== undefined && desc.fileContent !== null ? desc.fileContent
-						: desc.fileName && desc.fileExtension && desc.contextFolder ? await fsUtils.readFile(fsUtils.desc2fname(desc))
+						: desc.fileName && desc.fileExtension && desc.contextFolder ? fsUtils.readFile(fsUtils.desc2fname(desc))
 							: activeEditor?.document?.getText(),
 					line: desc.line !== undefined && desc.line !== null ? desc.line : activeEditor?.selection?.active?.line
 				};
