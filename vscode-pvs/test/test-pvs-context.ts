@@ -1,7 +1,7 @@
 import * as fsUtils from "../server/src/common/fsUtils";
 import { PvsResponse, PvsResult } from "../server/src/common/pvs-gui";
 import { PvsProxy } from '../server/src/pvsProxy'; // XmlRpcSystemMethods
-import { configFile } from './test-utils';
+import { configFile } from './test.utils';
 import * as path from 'path';
 import { execSync } from "child_process";
 //import { PvsIoProxy } from '../server/src/pvsioProxy';

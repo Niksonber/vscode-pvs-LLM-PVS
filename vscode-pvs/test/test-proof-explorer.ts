@@ -1,9 +1,9 @@
 import * as fsUtils from "../server/src/common/fsUtils";
-import { configFile, label, sandboxExamples } from './test-utils';
+import { configFile, label, sandboxExamples } from './test.utils';
 import * as path from 'path';
 import { PvsProofExplorer } from "../server/src/providers/pvsProofExplorer";
-import { ProofNodeX, ProveFormulaResponse, PvsFormula, PvsProofCommand, SequentDescriptor } from "../server/src/common/serverInterface";
-import { PvsLanguageServer } from "../server/src/pvsLanguageServer";
+import { ProofNodeX, PvsFormula, PvsProofCommand /*, SequentDescriptor*/ } from "../server/src/common/serverInterface";
+import { PvsLanguageServer, PvsServerDescriptor } from "../server/src/pvsLanguageServer";
 import { PvsResponse, PvsResult } from "../server/src/common/pvs-gui";
 import { expect } from 'chai';
 
@@ -17,7 +17,15 @@ describe("proof-explorer", () => {
         const content: { pvsPath: string } = JSON.parse(config);
         // console.log(content);
         const pvsPath: string = content.pvsPath;
-        await server.startPvsServer({ pvsPath, externalServer: true }, { verbose: false, debugMode: false });
+        const desc: PvsServerDescriptor = {
+            pvsPath,
+            pvsLibraryPath: '',
+            contextFolder: '~',
+            externalServer: true,
+            webSocketPort: 23456,
+            remote: {}
+        };
+        await server.startPvsServer(desc, { verbose: false, debugMode: false });
 
         console.log("\n----------------------");
         console.log("test-proof-explorer");
@@ -239,7 +247,7 @@ describe("proof-explorer", () => {
         // console.log(response);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
 
-        const result: SequentDescriptor[] = response?.result;
+        const result/*: SequentDescriptor[]*/ = response?.result;
         // load initial sequent in proof explorer
         proofExplorer.loadInitialSequent(result[0]);
 

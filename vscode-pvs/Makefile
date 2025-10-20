@@ -165,4 +165,4 @@ examples:
 	git submodule update
 	@echo "\033[0;32m** Done with examples! **\033[0m"
 
-.PHONY: test test-proxy test-parser test-find-declaration test-typechecker test-prover test-workspace test-pvs-context resolutions examples
+.PHONY: test test-pvs-language-server test-proxy test-parser test-find-declaration test-typechecker test-prover test-workspace test-pvs-context resolutions examples

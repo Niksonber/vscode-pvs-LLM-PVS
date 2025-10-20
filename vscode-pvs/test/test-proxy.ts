@@ -1,11 +1,12 @@
 import * as fsUtils from "../server/src/common/fsUtils";
 import { PvsResponse } from "../server/src/common/pvs-gui";
-import { PvsProxy } from '../server/src/pvsProxy'; // XmlRpcSystemMethods
-import { label, configFile, sandboxExamples } from './test-utils';
+import { DEFAULT_PVS_WEBSOCKET_PORT, PvsProxy } from '../server/src/pvsProxy'; // XmlRpcSystemMethods
+import { label, configFile, sandboxExamples } from './test.utils';
 import { expect } from 'chai'
 
 //----------------------------
 //   Test cases for pvs-proxy
+//   NOTE: to run this test, please manually launch an instance of the PVS server (./pvs -raw -port 23456)
 //----------------------------
 describe("pvs-proxy", () => {
     let pvsProxy: PvsProxy | undefined = undefined;
@@ -15,7 +16,10 @@ describe("pvs-proxy", () => {
         // console.log(content);
         const pvsPath: string = content.pvsPath;
         // log("Activating xmlrpc proxy...");
-        pvsProxy = new PvsProxy(pvsPath, { externalServer: true });
+        pvsProxy = new PvsProxy(pvsPath, {
+            externalServer: true,
+            webSocketPort: DEFAULT_PVS_WEBSOCKET_PORT
+        });
         await pvsProxy?.activate({ debugMode: false, showBanner: false }); // this will also start pvs-server
 
         // delete pvsbin files and .pvscontext
@@ -23,6 +27,7 @@ describe("pvs-proxy", () => {
 
         console.log("\n----------------------");
         console.log("test-proxy");
+        console.log("NOTE: prior to running this test, an instance of the PVS server needs to be launched manually (./pvs -raw -port 23456)")
         console.log("----------------------");
     });
     after(async () => {
@@ -65,15 +70,20 @@ describe("pvs-proxy", () => {
             'change-context',
             'change-workspace',
             'clear-workspace',
+            'collect-theory-usings',
             'delete-proof-of-formula',
             'find-declaration',
             'get-proof-scripts',
             'help',
             'interrupt',
             'interrupt-proof',
+            'latex-importchain',
+            'latex-pvs-file',
+            'latex-theory',
             'lisp',
             'list-client-methods',
             'list-methods',
+            'mark-proof-as-default',
             'names-info',
             'parse',
             'proof-command',
@@ -83,14 +93,16 @@ describe("pvs-proxy", () => {
             'prove-formula',
             'prove-tccs',
             'prover-status',
+            'pvsio-eval',
+            'pvsio-start',
             'quit-all-proof-sessions',
             'reset',
             'save-all-proofs',
             'show-tccs',
-            'store-last-attempted-proof',
             'term-at',
             'typecheck'
         ];
+        // console.dir({ response, methods });
         expect(response).not.to.equal(null);
         expect(response).not.to.be.undefined;
         expect(response?.result).to.deep.equal(methods);

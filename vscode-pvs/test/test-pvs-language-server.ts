@@ -1,7 +1,7 @@
 import * as fsUtils from "../server/src/common/fsUtils";
-import { configFile } from './test-utils';
+import { configFile } from './test.utils';
 import * as path from 'path';
-import { PvsLanguageServer } from '../server/src/pvsLanguageServer'
+import { PvsLanguageServer, PvsServerDescriptor } from '../server/src/pvsLanguageServer'
 import { ProofDescriptor, PvsFormula } from "../server/src/common/serverInterface";
 import { execSync } from "child_process";
 import { PvsResult } from "../server/src/common/pvs-gui";
@@ -18,7 +18,15 @@ describe("pvs-language-server", () => {
 		const content: { pvsPath: string } = JSON.parse(config);
 		// console.log(content);
 		const pvsPath: string = content.pvsPath;
-		await server.startPvsServer({ pvsPath });
+		const desc: PvsServerDescriptor = {
+			pvsPath,
+			pvsLibraryPath: '',
+			contextFolder: '~',
+			externalServer: true,
+			webSocketPort: 23456,
+			remote: {}
+		};
+		await server.startPvsServer(desc);
 
 		console.log("\n----------------------");
 		console.log("test-pvs-language-server");
@@ -27,7 +35,7 @@ describe("pvs-language-server", () => {
 	after(async () => {
 	});
 
-	// utility function, quits the prover if the prover status is active
+	// utility function, quits the prover if the prover status is active @PM: is this function not needed anymore?
 	const quitProverIfActive = async (): Promise<void> => {
 		// quit prover if prover status is active
 		const proverStatus: PvsResult = await server.getPvsProxy().getProverStatus();
@@ -36,7 +44,7 @@ describe("pvs-language-server", () => {
 		console.log(proverStatus);
 		if (proverStatus && proverStatus.result !== "inactive") {
 			// await server.getPvsProxy().proofCommand({ cmd: 'quit' }); // @M3 proofId is mandatory now
-			await server.getPvsProxy().quitAllProofs();
+			await server.getPvsProxy().quitAllProofs(); // @PM: why was this command not available anymore?
 		}
 	}
 	

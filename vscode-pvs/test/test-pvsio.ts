@@ -2,7 +2,7 @@ import * as fsUtils from "../server/src/common/fsUtils";
 import { PvsIoProxy } from '../server/src/pvsioProxy'; // XmlRpcSystemMethods
 import { EvalExpressionRequest } from "../server/src/common/serverInterface";
 import { PvsResult } from "../server/src/common/pvs-gui";
-import { configFile, pvsioExamples } from './test-utils';
+import { configFile, pvsioExamples } from './test.utils';
 import { expect } from 'chai';
 
 //----------------------------

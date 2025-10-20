@@ -2073,7 +2073,7 @@
 		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
 		"test:server": "node_modules/jasmine-ts/lib/index.js --config=server/test/jasmine-specs/jasmine-test-all.json",
 		"lint": "eslint --ext .ts server/src && eslint --ext .ts client/src",
-		"test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\", \"types\": [ \"node\", \"mocha\" ] }' mocha -r ts-node/register -reporter dot 'test/*.ts'",
+		"test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\", \"types\": [ \"node\", \"mocha\" ] }' mocha -r ts-node/register -reporter dot 'test/test-*.ts'",
 		"test-find-declaration": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\", \"types\": [ \"node\", \"mocha\" ] }' mocha -r ts-node/register -reporter dot 'test/test-find-declaration.ts'",
 		"test-parser": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\", \"types\": [ \"node\", \"mocha\" ] }' mocha -r ts-node/register -reporter dot 'test/test-parser.ts'",
 		"test-proof-explorer": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\", \"types\": [ \"node\", \"mocha\" ] }' mocha -r ts-node/register -reporter dot 'test/test-proof-explorer.ts'",

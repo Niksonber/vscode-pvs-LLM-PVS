@@ -1223,15 +1223,15 @@ export interface PvsDocDescriptor {
 };
 
 interface remoteDetails {
-	port: number;
-	ip: string;
-	ssh_path: string;
-	token: string;
-	hostname: string;
-	workspace: string;
+	port?: number;
+	ip?: string;
+	ssh_path?: string;
+	token?: string;
+	hostname?: string;
+	workspace?: string;
 }
 
-export type remoteDetailsDesc = remoteDetails | {};
+export type remoteDetailsDesc = remoteDetails;
 
 export interface ClientMessage  {
 	type: string;

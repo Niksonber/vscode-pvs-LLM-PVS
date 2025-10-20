@@ -98,6 +98,15 @@ export declare interface ContextDiagnostics {
 	}
 };
 
+export declare interface PvsServerDescriptor {
+	pvsPath?: string, 
+	pvsLibraryPath?: string, 
+	contextFolder?: string, 
+	externalServer?: boolean, 
+	webSocketPort: number, 
+	remote: remoteDetailsDesc
+};
+
 // Example server settings, this is not used at the moment
 interface Settings {
 	maxNumberOfProblems: number;
@@ -2025,10 +2034,12 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 	 * Utility function, starts pvs-server
 	 */
 	async startPvsServer (
-		desc: { pvsPath?: string, pvsLibraryPath?: string, contextFolder?: string, externalServer?: boolean, webSocketPort: number, remote: remoteDetailsDesc }, 
-		opt?: { verbose?: boolean, debugMode?: boolean, forceKill?: boolean }): Promise<boolean> {
+		desc: PvsServerDescriptor, 
+		opt?: { verbose?: boolean, debugMode?: boolean, forceKill?: boolean
+	}): Promise<boolean> {
 		if (desc) {
 			opt = opt || {};
+			console.dir(desc, { depth: null });
 			desc = fsUtils.decodeURIComponents(desc);
 			if (this.pvsProxy) {
 				if ((opt.forceKill && this.pvsProxy?.pvsServerProcessStatus == ProcessCode.SUCCESS) || 
@@ -2048,14 +2059,14 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 				} else {
 					this.pvsPath = desc.pvsPath || this.pvsPath;
 					this.pvsLibraryPath = desc.pvsLibraryPath === undefined ? this.pvsLibraryPath : desc.pvsLibraryPath;
-					this.pvsProxy = new PvsProxy(this.pvsPath, 
-						{ connection: this.connection, 
-							pvsLibraryPath: this.pvsLibraryPath, 
-							externalServer: externalServer,
-							webSocketPort: desc.webSocketPort,
-							remote: desc.remote,
-							extensionPath : this.extensionPath
-						 } );
+					this.pvsProxy = new PvsProxy(this.pvsPath, { 
+						connection: this.connection, 
+						pvsLibraryPath: this.pvsLibraryPath, 
+						externalServer: externalServer,
+						webSocketPort: desc.webSocketPort,
+						remote: desc.remote,
+						extensionPath : this.extensionPath
+					});
 					this.createServiceProviders();
 				}	
 				const success: ProcessCode = await this.pvsProxy?.activate({

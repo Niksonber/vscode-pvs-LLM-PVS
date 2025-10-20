@@ -1,4 +1,4 @@
-import * as pvsgui from "../server/src/common/pvs-gui.d";
+import * as pvsgui from "../server/src/common/pvs-gui";
 import { ProofDescriptor } from "../server/src/common/serverInterface";
 
 export const parse1_result: pvsgui.ParseResult =

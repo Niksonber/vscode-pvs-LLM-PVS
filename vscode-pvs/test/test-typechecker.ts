@@ -5,9 +5,8 @@ import {
     configFile, sandboxExamples,
     stever, steverFiles, pillbox, pillboxFiles, pvsioweb, pvsiowebFiles, pvsiowebFolders,
     dependable_plus_safe,
-    mValueExamples,
     label
-} from './test-utils';
+} from './test.utils';
 import * as path from 'path';
 import { expect } from 'chai';
 

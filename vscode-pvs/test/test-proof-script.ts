@@ -1,9 +1,8 @@
 import * as fsUtils from "../server/src/common/fsUtils";
-import { PvsResponse, PvsResult } from "../server/src/common/pvs-gui";
+import { PvsResponse } from "../server/src/common/pvs-gui";
 import { PvsProxy } from '../server/src/pvsProxy'; // XmlRpcSystemMethods
-import { label, log, configFile, sandboxExamples, helloworldExamples } from './test-utils';
-import { ProofDescriptor, ProofFile, PvsFormula, PvsTheory } from "../server/src/common/serverInterface";
-import * as path from 'path';
+import { label, log, configFile, sandboxExamples, helloworldExamples } from './test.utils';
+import { ProofDescriptor, PvsFormula } from "../server/src/common/serverInterface";
 import { expect } from 'chai';
 
 //----------------------------

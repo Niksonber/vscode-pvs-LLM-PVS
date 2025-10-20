@@ -68,9 +68,10 @@ import { checkPar, CheckParResult, getErrorRange, isQuitCommand, isQuitDontSaveC
 import * as languageUtils from './common/languageUtils';
 // import { PvsProxyLegacy } from './legacy/pvsProxyLegacy';
 import { PvsErrorManager } from './pvsErrorManager';
-import { ChildProcessWithoutNullStreams, execSync, spawn } from 'child_process';
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { SSHTunnel } from './SSHTunnel';
-import { Extension } from 'typescript';
+
+export const DEFAULT_PVS_WEBSOCKET_PORT: number = 23456;
 
 export class PvsProgressInfo {
 	protected progressLevel: number = 0;
@@ -188,7 +189,7 @@ export class PvsProxy {
 			this.nasalibPath = fsUtils.getNasalibPath(this.pvsLibraryPath);
 		}
 
-		this.webSocketPort = (!!opt.webSocketPort) ? opt.webSocketPort : 23456; // 22334; // 23456;
+		this.webSocketPort = (!!opt.webSocketPort) ? opt.webSocketPort : DEFAULT_PVS_WEBSOCKET_PORT; // 22334; // 23456;
 		this.client_methods.forEach(mth => {
 			this.handlers[mth] = (params: string[]): string[] => {
 				// console.info(`[${fsUtils.generateTimestamp()}] `+"info", params);
@@ -202,7 +203,7 @@ export class PvsProxy {
 
 		// create antlr parser for pvs
 		this.parser = new Parser();
-		this.remoteDetails = opt.remote;
+		this.remoteDetails = opt.remote || {};
 		this.remoteActive = false;
 		this.pathCache = { workspacePaths: {}, libPaths: {} };
 		this.pendingPathSyncs = new Map();
@@ -227,7 +228,7 @@ export class PvsProxy {
 	}
 
 	validRemoteDetails(remote: remoteDetailsDesc): boolean {
-		if (remote['port'] && remote['ip'] && remote['ssh_path'] && remote['hostname']) {
+		if (remote?.port && remote?.ip && remote?.ssh_path && remote?.hostname) {
 			return true;
 		} return false;
 	}
@@ -548,7 +549,7 @@ export class PvsProxy {
 		this.webSocket.on('message', async (msg: string) => {
 			const obj = JSON.parse(msg);
 			// Should check for valid JSON-RPC,
-			console.log(`[${fsUtils.generateTimestamp()}] `+'[pvsProxy.startWebSocket] webSocket.on message: ', this.pendingRequests); // debug
+			console.log(`[${fsUtils.generateTimestamp()}] `+'[pvsProxy.startWebSocket] webSocket.on message: ', JSON.stringify(this.pendingRequests)); // debug
 			console.log(`[${fsUtils.generateTimestamp()}] `+'[pvsProxy.startWebSocket]  obj = ', obj); // debug
 			if (obj.type === "send-token") {
 				console.log("Received new session token from remove server");
@@ -939,7 +940,7 @@ export class PvsProxy {
 		this.verbose = !!opt.verbose;
 
 		if (this.externalServer){
-			this.connection.sendNotification("server.status.progress", { msg: "Waiting for the external server to respond..." });
+			this.connection?.sendNotification("server.status.progress", { msg: "Waiting for the external server to respond..." });
 		}
 
 		this.pvsServerProcessStatus = await this.restartPvsServer();
@@ -1755,6 +1756,13 @@ export class PvsProxy {
 	}
 
 	/**
+	 * Quits all active proofs
+	 */
+	async quitAllProofs(): Promise<PvsResponse> {
+		return await this.pvsRequest('quit-all-proof-sessions');
+	}
+
+	/**
 	 * Finds a symbol declaration
 	 * The result is an object in the form
 	 * {
@@ -1772,10 +1780,11 @@ export class PvsProxy {
 		opt = opt || {};
 		if (this.remoteActive && ctxPath) {
 			const rsyncCode = await this.syncPaths(ctxPath);
-			if (rsyncCode !== 0)
+			if (rsyncCode !== 0) {
 				return { jsonrpc: '2.0', id: '', error: { code:rsyncCode, message: `Error synchronizing path ${ctxPath} (error code: ${rsyncCode})`}};
+			}
 		}
-			return await this.pvsRequest('find-declaration', [symbolName]);
+		return await this.pvsRequest('find-declaration', [symbolName]);
 	}
 
 	async findTheory(theoryName: string): Promise<PvsResponse> {

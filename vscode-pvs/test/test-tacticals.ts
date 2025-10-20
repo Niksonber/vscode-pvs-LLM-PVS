@@ -1,7 +1,7 @@
 import * as fsUtils from "../server/src/common/fsUtils";
 import { PvsResponse, PvsResult } from "../server/src/common/pvs-gui";
 import { PvsProxy } from '../server/src/pvsProxy';
-import { configFile, tacticalsExamples } from './test-utils';
+import { configFile, tacticalsExamples } from './test.utils';
 import { PvsFormula } from "../server/src/common/serverInterface";
 import * as path from 'path';
 import { execSync } from "child_process";

@@ -1,7 +1,7 @@
 import * as fsUtils from "../server/src/common/fsUtils";
 import { PvsResponse } from "../server/src/common/pvs-gui";
 import { PvsProxy } from '../server/src/pvsProxy';
-import { mValue2Examples, configFile, sandboxExamples, pigeonhole } from './test-utils';
+import { mValue2Examples, configFile, sandboxExamples, pigeonhole } from './test.utils';
 import { expect } from 'chai';
 import * as path from "path";
 import { commentRegexp, theoremRegexp } from "../server/src/common/languageUtils";
@@ -50,7 +50,7 @@ describe("pvs-proxy", () => {
         // Need to clear-theories, in case rerunning with the same server.
         await pvsProxy?.emptyAllWorkspaces();
 
-        const home: PvsResponse | undefined = await pvsProxy?.changeContext("~");
+        const home: PvsResponse | undefined = await pvsProxy?.changeContext({ contextFolder: "~" });
         expect(home).not.to.equal(null);
         expect(home).not.to.be.undefined;
         expect(home?.result).not.to.contain("~"); // tilde should be expanded

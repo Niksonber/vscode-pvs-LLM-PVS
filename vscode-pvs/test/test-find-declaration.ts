@@ -1,8 +1,8 @@
 import * as fsUtils from "../server/src/common/fsUtils";
-import * as test from "./test-constants";
+import * as test from "./test.constants";
 import { PvsResponse, FindDeclarationResult } from "../server/src/common/pvs-gui";
 import { PvsProxy } from '../server/src/pvsProxy'; // XmlRpcSystemMethods
-import { label, configFile, sandboxExamples } from './test-utils';
+import { label, configFile, sandboxExamples } from './test.utils';
 import { expect } from 'chai';
 
 //----------------------------
