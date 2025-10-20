@@ -20,7 +20,7 @@ PVS_FOLDER=pvs-8.0
 PVS_PATH=$(INSTALLATION_PATH)/$(PVS_FOLDER)
 PVS=$(PVS_PATH)/pvs
 
-NASALIB_GIT="https://github.com/nasa/pvslib" -b "v8.0"
+NASALIB_GIT="https://github.com/nasa/pvslib"
 NASALIB_FOLDER=nasalib
 NASALIB_PATH=$(INSTALLATION_PATH)/$(PVS_FOLDER)/$(NASALIB_FOLDER)
 NASALIB=$(NASALIB_PATH)/nasalib-version
