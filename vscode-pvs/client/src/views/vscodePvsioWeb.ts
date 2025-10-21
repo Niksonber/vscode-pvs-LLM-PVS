@@ -211,9 +211,9 @@ export class VSCodePvsioWeb {
     // evaluator response callback
     protected evaluatorResponseCallback: (res: EvaluatorCommandResponse) => void;
 
-    // theory associated with the pvsioweb session
+    // theory associated with the PVSioWeb session
     protected theory: PvsTheory;
-    // terminal associated with the pvsioweb session
+    // terminal associated with the PVSioWeb session
     protected xterm: VSCodePvsXTerm;
 
     // title of the webview
@@ -271,14 +271,14 @@ export class VSCodePvsioWeb {
         }
     }
     /**
-     * Defines the theory associated with the pvsioweb session
+     * Defines the theory associated with the PVSioWeb session
      * @param theory 
      */
     setTheory (theory: PvsTheory): void {
         this.theory = theory;
     }
     /**
-     * Connects pvsioweb to a terminal with pvsio
+     * Connects PVSioWeb to a terminal with pvsio
      * @param terminal 
      */
     setTerminal (terminal: VSCodePvsXTerm): void {
@@ -451,7 +451,7 @@ export class VSCodePvsioWeb {
         return null;
     }
     /**
-     * Save pvsioweb files
+     * Save PVSioWeb files
      */
     async savePVSioWebFiles (): Promise<boolean> {
         let success: boolean = await this.saveIoFile();
@@ -459,7 +459,7 @@ export class VSCodePvsioWeb {
         return success
     }
     /**
-     * Save the current hotspots shown in the webview
+     * Save the current hot spots shown in the webview
      */
     async saveIoFile (): Promise<boolean> {
         if (this.data) {
@@ -525,7 +525,7 @@ export class VSCodePvsioWeb {
         return false;
     }
     /**
-     * send a request to render widgets to pvsioweb
+     * send a request to render widgets to PVSioWeb
      */
     renderState (state: string): void {
         if (state) {
@@ -540,7 +540,7 @@ export class VSCodePvsioWeb {
      * Internal function, checks if the returned state is an evaluation error
      * @param state 
      */
-    protected evalutionError (state: string): boolean {
+    protected evaluationError (state: string): boolean {
         return state?.includes("Expecting an expression")
             || state?.includes("does not uniquely resolve")
             || state?.includes("Parser error");
@@ -640,7 +640,7 @@ export class VSCodePvsioWeb {
         if (this.data[init]?.value) {
             // send init to the server if the initial state is defined. 
             const initState: string = this.data[init].value;
-            const state: string = await this.sendCommand(initState); // sendCommand will register a listere for serverEvent.evaluatorCommandResponse
+            const state: string = await this.sendCommand(initState); // sendCommand will register a listener for serverEvent.evaluatorCommandResponse
             this.stateMachineInitialized = true;
             return state;
         } 
@@ -932,7 +932,7 @@ export class VSCodePvsioWeb {
     //     // create webview content
     //     this.createContent();
     //     // set language to pvs
-    //     vscodeUtils.setEditorLanguagetoPVS();
+    //     vscodeUtils.setEditorLanguageToPVS();
     // }
     /**
      * Creates the html rendered in the webview
