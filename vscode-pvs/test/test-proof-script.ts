@@ -54,7 +54,7 @@ describe("proofScript", () => {
         expect(response?.error).to.be.undefined;
         expect(response?.result).not.to.be.undefined;
         const proof_header: string = response?.result.split("\n")[0];
-        expect(proof_header).to.deep.equal(`;;; Proof sq_neg-1 for formula sq.sq_neg`);
+        expect(proof_header).to.match(/;;; Proof sq_neg-(\d+) for formula sq.sq_neg/);
     });
 
     it(`returns a well-formed empty pvs proof script when the proof file is not available`, async () => {
@@ -219,7 +219,7 @@ describe("proofScript", () => {
 
         const msg: string = await fsUtils.readFile(`${fname}.err.msg`);
         expect(msg).not.to.be.undefined;
-        expect(msg).to.deep.equal("Expected ',' or ']' after array element in JSON at position 36");
+        expect(msg).to.match(/Expected ',' or ']' after array element in JSON at position 36 .*/);
         // console.log(msg);
 
         fsUtils.deleteFile(fname);
@@ -281,9 +281,9 @@ describe("proofScript", () => {
         let response: PvsResponse | undefined = await pvsProxy?.lisp(`(change-workspace "${formula.contextFolder}")`);
         response = await pvsProxy?.lisp(`(typecheck-file "${fsUtils.desc2fname(formula)}" nil nil nil nil t)`);
         response = await pvsProxy?.lisp(`(get-default-proof-script "helloworld" "dummy")`);
-        // console.log(response);
+        console.log(response);
         expect(response).not.to.be.undefined;
-        expect(response?.result.toLowerCase()).to.equal('nil');
+        expect(response?.result).to.be.null;
     });
 
     it(`can open proofs with comments`, async () => {

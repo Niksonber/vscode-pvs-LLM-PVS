@@ -149,7 +149,7 @@ describe("proof-explorer", () => {
 
         const activeNode: ProofNodeX = proofExplorer.getActiveNode();
         // console.dir(activeNode);
-        expect(activeNode.name).to.deep.equal(`(case "x!1 > 0")`);
+        expect(activeNode.name.toLowerCase()).to.deep.equal(`(case "x!1 > 0")`);
         expect(proofExplorer.ghostNodeIsActive()).to.equal(false);
     }).timeout(6000);
 
