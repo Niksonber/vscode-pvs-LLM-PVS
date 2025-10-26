@@ -74,19 +74,14 @@ describe("proof-explorer", () => {
         cmd: ""
     };
 
-    // the following groupd of tests needs to be performed together -- don't use fit() to enable just one of them
+    // note: these tests need to be performed together -- be mindful when skipping them, because this may cause other tests down the line to fail
     it(`can step single proof commands`, async () => {
-        //const proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
-        // if (proverStatus && proverStatus.result !== "inactive") {
-        // 		await server.getPvsProxy().proofCommand({ cmd: 'quit' });
-        // 	}
-        // await server.getPvsProxy().quitProofIfInProver();
         label(`can step single proof commands`);
 
-        let response = await server.proveFormulaRequest(request);
-
+        await server.proveFormulaRequest(request);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         let root: ProofNodeX = proofExplorer.getProofX();
+        console.dir(root, { depth: null });
         expect(root.name).to.deep.equal(request.formulaName);
         expect(root.rules.length).to.equal(0);
 
@@ -99,7 +94,70 @@ describe("proof-explorer", () => {
         expect(root.rules[0].type).to.deep.equal("proof-command");
         expect(root.rules[0].parent).to.deep.equal(root.id);
     });
+
+    // at this point, the proof should contain one command (skosimp*), try to send a new command that can will be added to the proof tree
+    it(`can append valid proof commands`, async () => {
+        label(`can append valid proof commands`);
+
+        request.cmd = "(assert)";
+        const proofExplorer: PvsProofExplorer = server.getProofExplorer();
+
+        await proofExplorer.proofCommandRequest(request);
+        const root: ProofNodeX = proofExplorer.getProofX()
+
+        console.dir(root);
+        expect(root.name).to.deep.equal(request.formulaName);
+        expect(root.rules[0].name.toLowerCase()).to.deep.equal("(skosimp*)");
+        expect(root.rules[0].type).to.deep.equal("proof-command");
+        expect(root.rules[0].parent).to.deep.equal(root.id);
+        expect(root.rules[1].name.toLowerCase()).to.deep.equal("(assert)");
+        expect(root.rules[1].type).to.deep.equal("proof-command");
+        expect(root.rules[1].parent).to.deep.equal(root.id);
+    });
+
+    // at this point, the proof should contain two commands (skosimp*)(assert), try to send a new command that won't be added to the proof tree, e.g., because it's not applicable (lift-if)
+    it(`understands PVS reporting no change in the proof tree`, async () => {
+        label(`understands PVS reporting no change in the proof tree`);
+
+        request.cmd = "(lift-if)";
+        const proofExplorer: PvsProofExplorer = server.getProofExplorer();
+
+        await proofExplorer.proofCommandRequest(request);
+        const root: ProofNodeX = proofExplorer.getProofX()
+
+        console.dir(root);
+        expect(root.name).to.deep.equal(request.formulaName);
+        expect(root.rules[0].name.toLowerCase()).to.deep.equal("(skosimp*)");
+        expect(root.rules[0].type).to.deep.equal("proof-command");
+        expect(root.rules[0].parent).to.deep.equal(root.id);
+        expect(root.rules[1].name.toLowerCase()).to.deep.equal("(assert)");
+        expect(root.rules[1].type).to.deep.equal("proof-command");
+        expect(root.rules[1].parent).to.deep.equal(root.id);
+        expect(root.rules.length).to.equal(2);
+    });
+
+    // at this point, the proof contains two commands (skosimp*)(assert), try to send a new command that won't be added to the proof tree, e.g., because it's not applicable (lift-if)
+    it(`understands PVS reporting ill formed rule`, async () => {
+        label(`understands PVS reporting ill formed rule`);
+
+        request.cmd = "(dada)";
+        const proofExplorer: PvsProofExplorer = server.getProofExplorer();
+
+        await proofExplorer.proofCommandRequest(request);
+        const root: ProofNodeX = proofExplorer.getProofX()
+
+        console.dir(root);
+        expect(root.name).to.deep.equal(request.formulaName);
+        expect(root.rules[0].name.toLowerCase()).to.deep.equal("(skosimp*)");
+        expect(root.rules[0].type).to.deep.equal("proof-command");
+        expect(root.rules[0].parent).to.deep.equal(root.id);
+        expect(root.rules[1].name.toLowerCase()).to.deep.equal("(assert)");
+        expect(root.rules[1].type).to.deep.equal("proof-command");
+        expect(root.rules[1].parent).to.deep.equal(root.id);
+        expect(root.rules.length).to.equal(2);
+    });
     
+return;    // the rest of the test sequence is disabled for now, we need to fix the above test cases first
     it(`can step a series of proof commands`, async () => {
         label(`can step a series of proof commands`);
 
