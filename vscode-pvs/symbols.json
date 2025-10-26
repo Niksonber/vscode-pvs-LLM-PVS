@@ -715,8 +715,18 @@
         "scope": "pvs",
         "body": [ "⊏" ]
     }, {
+        "description": "square image of",
+        "prefix": "\\sqsubset ⊏",
+        "scope": "pvs",
+        "body": [ "⊏" ]
+    }, {
         "description": "square original of",
         "prefix": "\\gtsquare ⊐",
+        "scope": "pvs",
+        "body": [ "⊐" ]
+    }, {
+        "description": "square original of",
+        "prefix": "\\sqsupset ⊐",
         "scope": "pvs",
         "body": [ "⊐" ]
     }, {
@@ -725,8 +735,18 @@
         "scope": "pvs",
         "body": [ "⊑" ]
     }, {
+        "description": "square image of or equal to",
+        "prefix": "\\sqsubseteq ⊑",
+        "scope": "pvs",
+        "body": [ "⊑" ]
+    }, {
         "description": "square original or or equal to",
         "prefix": "\\gtsquare ⊒",
+        "scope": "pvs",
+        "body": [ "⊒" ]
+    }, {
+        "description": "square original or or equal to",
+        "prefix": "\\sqsupseteq ⊒",
         "scope": "pvs",
         "body": [ "⊒" ]
     }, {
