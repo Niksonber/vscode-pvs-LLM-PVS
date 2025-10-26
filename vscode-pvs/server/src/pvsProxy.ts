@@ -1076,11 +1076,11 @@ export class PvsProxy {
 	}
 
 	formulaRef(fm: PvsFormula): string {
-		return this.theoryRef(fm) + "#" + fm.formulaName;
+		return fm?.formulaName ? this.theoryRef(fm) + "#" + fm.formulaName : this.theoryRef(fm);
 	}
 
 	formulaRefRemote(fm: PvsFormula): string {
-		return this.theoryRefRemote(fm) + "#" + fm.formulaName;
+		return fm?.formulaName ? this.theoryRefRemote(fm) + "#" + fm.formulaName : this.theoryRefRemote(fm);
 	}
 
 	/**
