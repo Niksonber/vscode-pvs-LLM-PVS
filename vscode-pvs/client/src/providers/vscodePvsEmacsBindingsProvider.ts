@@ -223,7 +223,10 @@ export class VSCodePvsEmacsBindingsProvider {
 				}
 				case "pr":
 				case "prove": {
-					commands.executeCommand('vscode-pvs.prove-formula', desc);
+					commands.executeCommand('vscode-pvs.prove-formula', {
+						...desc,
+						theoryName: (desc.fileExtension === ".tccs" && desc.theoryName.endsWith("_TCCS")) ? desc.theoryName.substring(0, desc.theoryName.length - 5) : desc.theoryName
+					});
 					break;
 				}
 				case "status-proofchain":
