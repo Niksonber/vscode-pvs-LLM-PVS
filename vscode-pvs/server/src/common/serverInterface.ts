@@ -387,6 +387,10 @@ export declare interface FileDescriptor extends ContextFolder {
 	fileContent?: string;
 }
 export declare type PvsFile = FileDescriptor;
+export declare interface TypeCheckFileRequest{ 
+	file: PvsFile;
+	force: boolean;
+}
 export declare interface PvsTheory extends PvsFile {
 	theoryName: string;
 	line?: number;

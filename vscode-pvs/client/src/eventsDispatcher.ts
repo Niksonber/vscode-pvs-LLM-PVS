@@ -52,7 +52,8 @@ import {
     CopyProofliteRequest, SaveProofResponse, GotoFileDescriptor, 
     FormulaDescriptor, quickFixReplaceCommand, QuickFixReplace, QuickFixAddImporting, 
     quickFixAddImportingCommand, VSCodePvsVersionDescriptor, DumpPvsFilesRequest, 
-    DumpPvsFilesResponse, UndumpPvsFilesRequest, UndumpPvsFilesResponse, FollowLink
+    DumpPvsFilesResponse, UndumpPvsFilesRequest, UndumpPvsFilesResponse, FollowLink,
+    TypeCheckFileRequest
 } from "./common/serverInterface";
 import { window, commands, ExtensionContext, ProgressLocation, Selection, Uri, workspace } from "vscode";
 import * as vscode from 'vscode';
@@ -994,6 +995,10 @@ export class EventsDispatcher {
             this.emacsBindings.metaxPrompt();
         }));
 
+        context.subscriptions.push(commands.registerCommand("vscode-pvs.ctrlU", () => {
+            this.emacsBindings.metaxPrompt(true);
+        }));
+
         //         // if the file is currently open in the editor, save file first
         //         await vscode.window.activeTextEditor.document.save();
         //         let formula: PvsFormula = resource2desc(vscode.window.activeTextEditor.document.fileName);
@@ -1645,7 +1650,7 @@ export class EventsDispatcher {
             }
         }));
         // vscode-pvs.typecheck-file
-		context.subscriptions.push(commands.registerCommand("vscode-pvs.typecheck-file", async (resource: string | { path: string } | { contextValue: string } | PvsFile) => {
+		context.subscriptions.push(commands.registerCommand("vscode-pvs.typecheck-file", async (resource: string | { path: string } | { contextValue: string } | PvsFile | TypeCheckFileRequest) => {
             const activeEditor: vscode.TextEditor = vscodeUtils.getActivePvsEditor();
             if (activeEditor?.document) {
                 // if the file is currently open in the editor, save file first
@@ -1655,13 +1660,17 @@ export class EventsDispatcher {
                 }
             }
 			if (resource) {
-                const desc: FileDescriptor = vscodeUtils.resource2fileDescriptor(resource);
+                const requestParam: TypeCheckFileRequest = {
+                    file: vscodeUtils.resource2fileDescriptor
+                ((typeof resource === 'string'? (<string>resource) : 'file' in resource ?(<TypeCheckFileRequest>resource).file : resource)),
+                    force: ((typeof resource !== 'string' && 'force' in resource ?(<TypeCheckFileRequest>resource).force : false))
+                }
                 
-                if (isPvsFile(desc)) {
+                if (isPvsFile(requestParam.file)) {
                     // show output panel for feedback
                     // commands.executeCommand("workbench.action.output.toggleOutput", true);
                     // send typecheck request to pvs-server
-                    this.client.sendRequest(serverRequest.typecheckFile, desc);
+                    this.client.sendRequest(serverRequest.typecheckFile, requestParam);
                 } else {
                     showWarningMessage (`Typechecking can only be performed on .pvs files.`);
                 }

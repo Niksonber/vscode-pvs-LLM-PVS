@@ -57,7 +57,8 @@ import {
 	NASALibDownloaderResponse, ListVersionsWithProgressRequest, ListVersionsWithProgressResponse, 
 	StatusProofChain, DumpPvsFilesRequest, DumpPvsFilesResponse, UndumpPvsFilesRequest, 
 	UndumpPvsFilesResponse, DumpFileDescriptor, PvsDocRequest, PvsDocKind, PvsDocDescriptor, PvsDocResponse,
-	remoteDetailsDesc
+	remoteDetailsDesc,
+	TypeCheckFileRequest
 } from './common/serverInterface'
 import { PvsCompletionProvider } from './providers/pvsCompletionProvider';
 import { PvsDefinitionProvider } from './providers/pvsDefinitionProvider';
@@ -777,7 +778,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 	/**
 	 * Typecheck file
 	 */
-	async typecheckFile (file: PvsFile, opt?: { externalServer?: boolean, quiet?: boolean, progressReporter?: (msg: string) => void }): Promise<PvsResponse | null> {
+	async typecheckFile (file: PvsFile, opt?: { externalServer?: boolean, quiet?: boolean, progressReporter?: (msg: string) => void, force?: boolean }): Promise<PvsResponse | null> {
 		opt = opt || {};
 		if (file && file.fileName && file.fileExtension && file.contextFolder) {
 			try {
@@ -820,18 +821,18 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 	/**
 	 * Typecheck file request handler
 	 */
-	async typecheckFileRequest (request: PvsFile): Promise<void> {
+	async typecheckFileRequest (request: TypeCheckFileRequest): Promise<void> {
 		console.log(`[pvsLanguageServer.typecheckFileRequest] request: ${JSON.stringify(request)}`);
 		
 		const mode: string = await this.getMode();
 		if (mode !== "lisp") {
 			return;
 		}
-		if (isPvsFile(request)) { // can be .pvs .tccs .summary .ppe ... files
-			request = fsUtils.decodeURIComponents(request);
+		if (isPvsFile(request.file)) { // can be .pvs .tccs .summary .ppe ... files
+			request.file = fsUtils.decodeURIComponents(request.file);
 			// only .pvs files should be type checked
-			request.fileExtension = ".pvs";
-			const fname: string = fsUtils.desc2fname(request);
+			request.file.fileExtension = ".pvs";
+			const fname: string = fsUtils.desc2fname(request.file);
 			// make sure file exists
 			if (!fsUtils.fileExists(fname)) {
 				this.notifyMessage({ msg: `Warning: file ${fname} does not exist. (source: Typechecker)` });
@@ -843,7 +844,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 			// parse workspace first, so the front-end is updated with statistics
 			// await this.parseWorkspaceRequest(request); // this could be done in parallel with typechecking -- pvs-server is not able for now tho.
 			// proceed with typechecking
-			const response: PvsResponse = await this.typecheckFile(request, { progressReporter: (msg: string) => {this.notifyProgressImportantTask({ id: taskId, msg: msg, increment: -1})}});
+			const response: PvsResponse = await this.typecheckFile(request.file, { progressReporter: (msg: string) => {this.notifyProgressImportantTask({ id: taskId, msg: msg, increment: -1})}, force: request.force});
 			console.log("Sending typecheckFileResponse:");
 			console.log("  → Event:", serverEvent.typecheckFileResponse);
 			console.log("  → Response:", response);
@@ -851,7 +852,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 
 			this.connection?.sendRequest(serverEvent.typecheckFileResponse, {
 				response,
-				args: request
+				args: request.file
 			});
 
 			// // send diagnostics
@@ -862,12 +863,12 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 					// 	isTypecheckError: true
 					// };
 					// this.sendDiagnostics("Typecheck");
-					this.notifyEndImportantTask({ id: taskId, msg: `${request.fileName}${request.fileExtension} typechecks successfully!` });
+					this.notifyEndImportantTask({ id: taskId, msg: `${request.file.fileName}${request.file.fileExtension} typechecks successfully!` });
 					// send a context descriptor because typechecking may generate adt files
-					const cdesc: PvsContextDescriptor = await this.getContextDescriptor({ contextFolder: request.contextFolder });
+					const cdesc: PvsContextDescriptor = await this.getContextDescriptor({ contextFolder: request.file.contextFolder });
 					this.connection?.sendRequest(serverEvent.contextUpdate, cdesc);	
 				} else {
-					this.pvsErrorManager?.handleTypecheckError({ response: <PvsError> response, taskId, request });
+					this.pvsErrorManager?.handleTypecheckError({ response: <PvsError> response, taskId, request: request.file });
 					// send diagnostics
 					// if (response.error.data) {
 					// 	const fname: string = (response.error.data.file_name) ? response.error.data.file_name : fsUtils.desc2fname(request);
@@ -2387,7 +2388,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 			  console.log(`[${fsUtils.generateTimestamp()}] `+`[pvsLanguageServer] responding request ${serverRequest.latexTheory} - param: ${JSON.stringify(request)} `); // #DEBUG
 				this.latexImportchainRequest(request); // async call
 			});
-			this.connection?.onRequest(serverRequest.typecheckFile, async (request: PvsFile) => {
+			this.connection?.onRequest(serverRequest.typecheckFile, async (request: TypeCheckFileRequest) => {
 			  console.log(`[${fsUtils.generateTimestamp()}] `+`[pvsLanguageServer] responding request ${serverRequest.typecheckFile} - param: ${JSON.stringify(request)} `); // #DEBUG
 				this.typecheckFileRequest(request); // async call
 			});

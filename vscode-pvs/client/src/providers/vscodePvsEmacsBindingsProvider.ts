@@ -125,6 +125,7 @@ export class VSCodePvsEmacsBindingsProvider {
 	protected metax: string = "M-x ";
 	protected userInput: string; // used by autocompletion
 	protected statusBar: VSCodePvsStatusBar;
+	protected enteringUniversalCommand: boolean = false;
 
 	constructor (client: LanguageClient, statusBar: VSCodePvsStatusBar) {
 		this.client = client;
@@ -201,7 +202,8 @@ export class VSCodePvsEmacsBindingsProvider {
 				case "tc": 
 				case "typecheck": {
 					desc.fileExtension = ".pvs"; // force file extension, in the case the command is invoked from the .tccs file
-					commands.executeCommand('vscode-pvs.typecheck-file', desc);
+					commands.executeCommand('vscode-pvs.typecheck-file', 
+						(this.enteringUniversalCommand? {file: desc, force: true} : desc));
 					break;
 				}
 				case "tcp": 
@@ -365,13 +367,15 @@ export class VSCodePvsEmacsBindingsProvider {
 			}
 		}
 	}
-	metaxPrompt (): void {
-		this.statusBar.showMsg(this.metax);
-		// window.showInputBox({
-		// 	prompt: "M-x ",
-		// }).then((userInput: string) => {
-		this.inputBox = window.createInputBox();
-		this.inputBox.prompt = this.metax;
+	metaxPrompt (universalCommand: boolean = false): void {
+		const commandPrefix: string = (universalCommand? "C-u": 
+			this.enteringUniversalCommand? "C-u " + this.metax: this.metax);
+		if(!this.enteringUniversalCommand) {
+      this.inputBox = window.createInputBox();
+			this.enteringUniversalCommand = universalCommand;
+		}
+		this.statusBar.showMsg(commandPrefix);
+		this.inputBox.prompt = commandPrefix;
 		this.inputBox.onDidAccept(() => {
 			this.onDidAccept(this.userInput);
 			this.inputBox.dispose();
@@ -380,8 +384,13 @@ export class VSCodePvsEmacsBindingsProvider {
 		this.inputBox.onDidChangeValue((input: string) => {
 			// FIXME: VSCode does not seem to capture tabs in the input box??
 			this.userInput = this.autocompleteInput(input);
-			this.inputBox.prompt = this.metax + this.userInput;
+			this.inputBox.prompt = commandPrefix + this.userInput;
 			this.statusBar.showMsg(this.inputBox.prompt);
+		});
+		this.inputBox.onDidHide(() => {
+			this.enteringUniversalCommand = false;
+			this.inputBox.dispose();
+			this.statusBar.clear();
 		});
 		this.inputBox.show();
 	}
