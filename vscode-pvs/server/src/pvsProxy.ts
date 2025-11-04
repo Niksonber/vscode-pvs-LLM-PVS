@@ -379,7 +379,7 @@ export class PvsProxy {
 
 	async syncPaths(contextPath: string): Promise<number> {
 		let rsyncCode = -1;
-		console.log(`[pvsProxy.syncPaths] Tyring to sync path: "${contextPath}" `);
+		console.log(`[pvsProxy.syncPaths] Trying to sync path: "${contextPath}" `);
 		if ('hostname' in this.remoteDetails && this.remoteActive && contextPath !== "") {
 			let remotePath = this.searchPathCache(contextPath);
 			if (!remotePath) {
@@ -603,7 +603,7 @@ export class PvsProxy {
 				if (!lib_path_returned) {
 					let lib_promises = new Array<Promise<number>>;
 					for (const key in obj.syncPathsResponse.libPaths) {
-						console.log(`[pvsProxy.startWebSocket!!!] Tyring to sync path: "${key}" - "${obj.syncPathsResponse.libPaths[key]}" `);
+						console.log(`[pvsProxy.startWebSocket!!!] Trying to sync path: "${key}" - "${obj.syncPathsResponse.libPaths[key]}" `);
 						if (!(key in this.pathCache.libPaths) && 'ssh_path' in this.remoteDetails && 'hostname' in this.remoteDetails) {
 							if (key !== "") 
 								lib_promises.push(this.runRsync(key, obj.syncPathsResponse.libPaths[key], this.remoteDetails.ssh_path, this.remoteDetails.hostname, this.remoteDetails.ip));
