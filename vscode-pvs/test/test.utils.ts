@@ -50,7 +50,7 @@ export const pvsiowebFiles: string[] = [
 	"baxter/limits",
 	"baxter/MDNumberpad",
 
-//	"calc/display", // @M3 pvs 8.0 does not end when typechecking 
+	"calc/display", // @PM pvs 8.0 fails to typecheck this file (cannot determine the type of substr) [was: @M3 pvs 8.0 does not end when typechecking]
 	"calc/utils",
 
 	"data_entry/arcomedical",

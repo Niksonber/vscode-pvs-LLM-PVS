@@ -3724,6 +3724,7 @@ export function sameBranchPSDisplayIds(displayIdA: string, displayIdB: string): 
 	return getBranchIdFromPSDisplayId(displayIdA)===getBranchIdFromPSDisplayId(displayIdB);
 }
 
-export function isQEDProofState(ps: PvsProofState): boolean {
-    return ps.commentary && (typeof ps.commentary === "string" ? isQEDCommand(ps.commentary as string) : (ps.commentary as string[]).some(isQEDCommand) )
+export function isQEDProofState(ps: PvsProofState | string): boolean {
+    return typeof ps === 'string' ? isQEDCommand(ps)
+        : ps?.commentary && (typeof ps.commentary === "string" ? isQEDCommand(ps.commentary as string) : (ps.commentary as string[]).some(isQEDCommand) )
 }

@@ -85,12 +85,13 @@ describe("pvs-typechecker", () => {
             contextFolder: sandboxExamples,
             fileExtension: ".pvs",
             fileName: "alaris2lnewmodes.pump",
-            formulaName: "vtbi_over_rate_lemma",
-            line: 28,
-            theoryName: "pump_th"
+            // formulaName: "vtbi_over_rate_lemma",
+            // line: 26,
+            // theoryName: "pump_th"
         };
 
         let response: PvsResponse | undefined = await pvsProxy?.typecheckFile(desc);
+        console.dir(response);
         expect(response).not.to.be.undefined;
         expect(response?.result).not.to.be.undefined;
         expect(response?.error).to.be.undefined;
@@ -167,8 +168,8 @@ describe("pvs-typechecker", () => {
 
     }
     for (let i = 0; i < pillboxFiles.length; i++) {
-        it(`can typecheck pillbox/${pillboxFiles[i]}.pvs`, async () => {
-        label(`can typecheck pillbox/${pillboxFiles[i]}.pvs`);
+        it(`can typecheck pillboxv7/${pillboxFiles[i]}.pvs`, async () => {
+        label(`can typecheck pillboxv7/${pillboxFiles[i]}.pvs`);
             // Need to clear-theories, in case rerunning with the same server.
             await pvsProxy?.emptyAllWorkspaces();
 
@@ -190,27 +191,19 @@ describe("pvs-typechecker", () => {
         label(`can typecheck pvsioweb/${pvsiowebFiles[i]}.pvs`);
             // Need to clear-theories, in case rerunning with the same server.
             await pvsProxy?.emptyAllWorkspaces();
-            if (i != 50) {
-                const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({
-                    fileName: pvsiowebFiles[i],
-                    fileExtension: ".pvs",
-                    contextFolder: pvsioweb
-                });
-                expect(response).not.to.be.undefined;
-                if (pvsiowebFiles[i].endsWith("MDNumberpaddd")) {
-                    expect(response?.error).not.to.be.undefined; // theory 'limits' declared in twice in the same workspace
-                } else {
-                    if (!response?.result) {
-                        console.log(`[test tc] ${i}: ${pvsiowebFiles[i]}`);
-                        console.dir(response);
-                    }
-                    expect(response?.result).not.to.be.undefined;
-                    expect(response?.error).to.be.undefined;
-                }
+            const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({
+                fileName: pvsiowebFiles[i],
+                fileExtension: ".pvs",
+                contextFolder: pvsioweb
+            });
+            expect(response).not.to.be.undefined;
+            if (pvsiowebFiles[i].endsWith("MDNumberpaddd")) {
+                expect(response?.error).not.to.be.undefined; // theory 'limits' declared twice in the same workspace
+            } else {
+                // console.dir({ response });
+                expect(response?.result).not.to.be.undefined;
+                expect(response?.error).to.be.undefined;
             }
-
         }).timeout(60000);
     }
-
-
 });

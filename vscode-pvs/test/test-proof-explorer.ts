@@ -2,7 +2,7 @@ import * as fsUtils from "../server/src/common/fsUtils";
 import { configFile, label, sandboxExamples } from './test.utils';
 import * as path from 'path';
 import { PvsProofExplorer } from "../server/src/providers/pvsProofExplorer";
-import { ProofNodeX, PvsFormula, PvsProofCommand /*, SequentDescriptor*/ } from "../server/src/common/serverInterface";
+import { ProofNodeX, ProofStatus, PvsFormula, PvsProofCommand /*, SequentDescriptor*/ } from "../server/src/common/serverInterface";
 import { PvsLanguageServer, PvsServerDescriptor } from "../server/src/pvsLanguageServer";
 import { PvsResponse, PvsResult } from "../server/src/common/pvs-gui";
 import { expect } from 'chai';
@@ -73,6 +73,16 @@ describe("proof-explorer", () => {
         theoryName: 'foo_th',
         cmd: ""
     };
+
+    const helloWorldFolder: string = path.join(__dirname, "helloworld");
+    const foo: PvsProofCommand = {
+        contextFolder: helloWorldFolder,
+        fileExtension: '.pvs',
+        fileName: 'helloworld',
+        formulaName: 'foo',
+        theoryName: 'helloworld',
+        cmd: ""
+    }
 
     // note: these tests need to be performed together -- be mindful when skipping them, because this may cause other tests down the line to fail
     it(`can step single proof commands`, async () => {
@@ -157,7 +167,6 @@ describe("proof-explorer", () => {
         expect(root.rules.length).to.equal(2);
     });
     
-return;    // the rest of the test sequence is disabled for now, we need to fix the above test cases first
     it(`can step a series of proof commands`, async () => {
         label(`can step a series of proof commands`);
 
@@ -166,7 +175,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
 
         await proofExplorer.proofCommandRequest(request);
         const root: ProofNodeX = proofExplorer.getProofX();
-        // console.dir(root, { depth: null });
+        console.dir(root, { depth: null });
         expect(root.rules.length).to.equal(4);
         expect(root.rules[0].name.toLowerCase()).to.deep.equal("(skosimp*)");
         expect(root.rules[1].name.toLowerCase()).to.deep.equal("(assert)");
@@ -186,6 +195,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
     });
 
     it(`can perform (undo)`, async () => {
+        label(`can perform (undo)`);
         request.cmd = "(undo)";
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         await proofExplorer.proofCommandRequest(request);
@@ -212,6 +222,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
     }).timeout(6000);
 
     it(`can perform (undo undo)`, async () => {
+        label(`can perform (undo undo)`);
         request.cmd = "(undo undo)";
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         await proofExplorer.proofCommandRequest(request);
@@ -249,6 +260,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
     }).timeout(6000);
 
     it(`can automatically trim branches if proof structure has changed`, async () => {
+        label(`can automatically trim branches if proof structure has changed`);
         request.cmd = `(undo)(case "x!1 > 2")`; // the second command will generate two proof branches, so all-typepreds should be trimmed
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         await proofExplorer.proofCommandRequest(request);
@@ -300,6 +312,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
 
     //-----
     it(`can start another proof when a prover session has already started`, async () => {
+        label(`can start another proof when a prover session has already started`);
         const response: PvsResponse | null = await server.proveFormula(request5);
 
         // console.log(response);
@@ -333,6 +346,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
     });
 
     it(`can delete a proof and display the correct active node`, async () => {
+        label(`can delete a proof and display the correct active node`);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         let root: ProofNodeX = proofExplorer.getProofX();
         expect(proofExplorer.isActive({ id: root.id, name: root.name }));
@@ -347,6 +361,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
     });
 
     it(`can automatically trim branches at the beginning of a proof, if proof structure has changed`, async () => {
+        label(`can automatically trim branches at the beginning of a proof, if proof structure has changed`);
         await server.proveFormulaRequest(request2);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
 
@@ -378,6 +393,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
     });
 
     it(`can trim branches with active nodes and correctly re-position the active node`, async () => {
+        label(`can trim branches with active nodes and correctly re-position the active node`);
         await server.proveFormulaRequest(request2a);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
 
@@ -419,6 +435,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
     });
 
     it(`can save current proof`, async () => {
+        label(`can save current proof`);
         await server.getPvsProxy().quitAllProofs();
 
         const formula: PvsFormula = {
@@ -436,6 +453,7 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
     }).timeout(4000);
 
     it(`can start a proof, then interrupt, quit and save current proof`, async () => {
+        label(`can start a proof, then interrupt, quit and save current proof`);
         let proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
         // console.dir(proverStatus);
         if (proverStatus && proverStatus.result !== "inactive") {
@@ -475,26 +493,48 @@ return;    // the rest of the test sequence is disabled for now, we need to fix 
         expect(success).to.equal(true);
     });
 
-    // fit(`can prove omega_2D_continuous without triggering stack overflow`, async () => {
-    // 	let proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
-    // 	// console.dir(proverStatus);
-    // 	if (proverStatus && proverStatus.result !== "inactive") {
-    // 		await server.getPvsProxy().proofCommand({ cmd: 'quit' });
-    // 	}
+    it(`can prove omega_2D_continuous without triggering stack overflow`, async () => {
+        label(`can prove omega_2D_continuous without triggering stack overflow`);
+    	let proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
+    	// console.dir(proverStatus);
+        const proofExplorer: PvsProofExplorer = server.getProofExplorer();
 
-    //     const formula: PvsFormula = {
-    //         contextFolder: path.join(__dirname, "nasalib/ACCoRD"),
-    //         fileExtension: ".pvs",
-    //         fileName: "omega_2D",
-    //         theoryName: "omega_2D",
-    //         formulaName: "omega_2D_continuous"
-    //     };
+    	if (proverStatus && proverStatus.result !== "inactive") {
+            await server.getPvsProxy().proofCommand({ proofId: proofExplorer.getProofId(), cmd: "quit" });
+    	}
 
-    // 	await server.proveFormulaRequest(formula, { autorun: true, externalServer: true });
-    // 	await server.
-    // 	// const res: { success: boolean, msg?: string } = await server.getProofExplorer().quitProofAndSave();
-    // 	// console.dir(res);
-    // 	// expect(res.success).toBeTrue();
-    // }, 80000);
+        const formula: PvsFormula = {
+            contextFolder: path.join(__dirname, "nasalib/ACCoRD"),
+            fileExtension: ".pvs",
+            fileName: "omega_2D",
+            theoryName: "omega_2D",
+            formulaName: "omega_2D_continuous"
+        };
+
+    	await server.proveFormulaRequest(formula, { autorun: true, externalServer: true });
+    	const res: { success: boolean, msg?: string } = await server.getProofExplorer().quitProofAndSave();
+    	console.dir(res);
+    	expect(res.success).to.be.true;
+    }).timeout(80000);
+
+    it.only(`can handle trivial proofs`, async () => {
+        label(`can handle trivial proofs`);
+
+        let proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
+        // console.dir(proverStatus);
+        if (proverStatus && proverStatus.result !== "inactive") {
+            await server.getPvsProxy().quitAllProofs();
+        }
+        await server.proveFormulaRequest(foo);
+        const proofExplorer: PvsProofExplorer = server.getProofExplorer();
+        const fmla: PvsFormula = proofExplorer.getFormula();
+        console.dir(fmla, { depth: null});
+        expect(fmla).not.to.be.undefined;
+        const node: ProofNodeX = proofExplorer.getActiveNode();
+        console.dir(node, { depth: null});
+        const status: ProofStatus = proofExplorer.getProofStatus();
+        console.dir(status, { depth: null});
+        expect(node).not.to.be.undefined;
+    });
 });
 

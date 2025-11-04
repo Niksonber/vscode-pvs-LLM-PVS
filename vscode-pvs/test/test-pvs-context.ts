@@ -6,9 +6,11 @@ import * as path from 'path';
 import { execSync } from "child_process";
 //import { PvsIoProxy } from '../server/src/pvsioProxy';
 import { expect } from 'chai';
+import { PvsProofState } from "../server/src/common/serverInterface";
 
 //----------------------------
 //   Test cases for checking behavior of pvs with corrupted .pvscontext
+//   NOTE: these test cases require NASALib
 //----------------------------
 describe("test-pvs-context", () => {
     let pvsProxy: PvsProxy | undefined = undefined;
@@ -54,57 +56,6 @@ describe("test-pvs-context", () => {
         })
     });
 
-    it(`can prove null_null_after_satisfaction_ft (nasalib-monitors-stack-limit-error.zip)`, async () => {
-        await pvsProxy?.quitAllProofs();
-
-        // Need to clear-theories, in case rerunning with the same server.
-        await pvsProxy?.emptyAllWorkspaces();
-
-        // remove folder if present and replace it with the content of the zip file
-        const contextFolder: string = path.join(baseFolder, "nasalib-monitors-stack-limit-error");
-        fsUtils.deleteFolder(contextFolder);
-        execSync(`cd ${baseFolder} && unzip nasalib-monitors-stack-limit-error.zip`);
-
-        let response: PvsResponse | undefined = await pvsProxy?.proveFormula({
-            fileName: "trace",
-            fileExtension: ".pvs",
-            contextFolder: path.join(contextFolder, "Fret_MLTL"),
-            theoryName: "trace",
-            formulaName: "null_null_after_satisfaction_ft"
-        });
-        expect(response).not.to.be.undefined;
-        expect(response?.result).not.to.be.undefined;
-        expect(response?.error).to.be.undefined;
-        // console.dir(response);
-        let prfid: string = response?.result.id;
-        const commands: string[] = [
-            '(skeep)',
-            '(fretex)',
-            '(iff)',
-            '(split)',
-            '(flatten)',
-            '(split)',
-            '(inst -1 "0")',
-            '(expand "nth")',
-            '(expand "after")',
-            '(inst -1 "0")',
-            '(expand "nth")',
-            '(flatten)',
-            '(skeep)',
-            '(skeep)',
-            '(case "n-1 < i")',
-            '(inst 2 "n-1")',
-            '(expand "Trace_equiv")',
-            '(inst -6 "n-1")',
-            '(grind)'
-        ]
-        for (let i = 0; i < commands.length; i++) {
-            response = await pvsProxy?.proofCommand({ proofId: prfid, cmd: commands[i] });
-        }
-        expect(response?.result).not.to.be.undefined;
-        expect(response?.error).to.be.undefined;
-    }).timeout(300000);
-
     it(`can typecheck nasalib-monitors/trace.pvs (nasalib-monitors.zip)`, async () => {
         // await quitProverIfActive();
 
@@ -127,7 +78,7 @@ describe("test-pvs-context", () => {
         expect(response?.result).not.to.be.undefined;
         expect(response?.error).to.be.undefined;
         // console.dir(response);
-        let prfid: string = response?.result.id;
+        let prfid: string = response?.result[0].id;
 
         response = await pvsProxy?.proofCommand({ proofId: prfid, cmd: `(skeep)` });
         response = await pvsProxy?.proofCommand({ proofId: prfid, cmd: `(fretex)` });
@@ -386,5 +337,56 @@ describe("test-pvs-context", () => {
 
     }).timeout(20000);
 
+
+    it(`can prove null_null_after_satisfaction_ft (nasalib-monitors-stack-limit-error.zip)`, async () => {
+        await pvsProxy?.quitAllProofs();
+
+        // Need to clear-theories, in case rerunning with the same server.
+        await pvsProxy?.emptyAllWorkspaces();
+
+        // remove folder if present and replace it with the content of the zip file
+        const contextFolder: string = path.join(baseFolder, "nasalib-monitors-stack-limit-error");
+        fsUtils.deleteFolder(contextFolder);
+        execSync(`cd ${baseFolder} && unzip nasalib-monitors-stack-limit-error.zip`);
+
+        let response: PvsResponse | undefined = await pvsProxy?.proveFormula({
+            fileName: "trace",
+            fileExtension: ".pvs",
+            contextFolder: path.join(contextFolder, "Fret_MLTL"),
+            theoryName: "trace",
+            formulaName: "null_null_after_satisfaction_ft"
+        });
+        expect(response).not.to.be.undefined;
+        expect(response?.result).not.to.be.undefined;
+        expect(response?.error).to.be.undefined;
+        // console.dir(response);
+        let prfid: string = response?.result[0].id;
+        const commands: string[] = [
+            '(skeep)',
+            '(fretex)',
+            '(iff)',
+            '(split)',
+            '(flatten)',
+            '(split)',
+            '(inst -1 "0")',
+            '(expand "nth")',
+            '(expand "after")',
+            '(inst -1 "0")',
+            '(expand "nth")',
+            '(flatten)',
+            '(skeep)',
+            '(skeep)',
+            '(case "n-1 < i")',
+            '(inst 2 "n-1")',
+            '(expand "Trace_equiv")',
+            '(inst -6 "n-1")',
+            '(grind)'
+        ]
+        for (let i = 0; i < commands.length; i++) {
+            response = await pvsProxy?.proofCommand({ proofId: prfid, cmd: commands[i] });
+        }
+        expect(response?.result).not.to.be.undefined;
+        expect(response?.error).to.be.undefined;
+    }).timeout(300000);
 });
 

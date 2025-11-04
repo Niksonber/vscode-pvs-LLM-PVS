@@ -5,6 +5,8 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
+import { PvsProofState } from "./serverInterface";
+
 /**
  * JSON schema for PVS GUIs
  */
@@ -172,7 +174,8 @@ export interface PvsResult {
     | FindDeclarationResult
     | LispResult
     | ShowTCCsResult
-    | TypecheckRequest; // TODO: update json schema
+    | TypecheckRequest // TODO: update json schema
+    | PvsProofState[]
   [k: string]: any;
 }
 export interface HelpResult {

@@ -375,7 +375,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
         });
         const success: boolean = await new Promise((resolve, reject) => {
             this.client.onRequest(serverEvent.proveFormulaResponse, (data: ProveFormulaResponse) => {
-              console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.proveFormulaResponse} - param: ${data} `); // #DEBUG
+              console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.proveFormulaResponse} - param: ${JSON.stringify(data)} `); // #DEBUG
                 if (this.sessionType) {
                     if (this.prettyPrinter) {
                         const color: colorUtils.PvsColor = colorUtils.getColor(colorUtils.PvsColor.green, this.colorTheme);
@@ -386,13 +386,21 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
                     this.onProverResponse(data, { ignoreCommentary: true });
                     this.enableTerminalInput();
                     this.showWelcomeMessage();
+                    if (isQEDProofState(data?.res) && typeof data.res === "object") {
+                        const msg: string = fsUtils.formatSequent(data?.res, { 
+                            colorTheme: this.colorTheme, 
+                            colorizeParens: this.colorizeParens,
+                            useColors: true
+                        });
+                        this.log(msg?.trim());
+                    }
                 }
                 resolve(true);
             });
             // The following handler is registered here because proof commands may originate from proof-explorer.
             // This handler will be replaced by the one in sendText as soon as a sendText is performed.
             this.client.onRequest(serverEvent.proofCommandResponse, (data: ProofCommandResponse) => {
-              console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.proofCommandResponse} - param: ${data} `); // #DEBUG
+              console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.proofCommandResponse} - param: ${JSON.stringify(data)} `); // #DEBUG
                 // console.log(`[${fsUtils.generateTimestamp()}] `+"[vscode-pvs-xterm] proofCommandResponse", data);
                 this.onProverResponse(data);
             });
@@ -406,20 +414,20 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
     protected onProverResponse (data: ProofCommandResponse, opt?: { ignoreCommentary?: boolean }): void {
         opt = opt || {};
         if (data) {
-            if (typeof data.res === "string") {
-                if (data.res === "Q.E.D." || data.res === "bye!") {
+            if (isQEDProofState(data.res) || typeof data.res === "string") {
+                if (isQEDProofState(data.res) || data.res === "bye!") {
                     const xtermMsg: string = (data.res === "bye!"? colorUtils.colorText(data.res, colorUtils.getColor(colorUtils.PvsColor.green, this.colorTheme)) : "");
                     this.log("\n" + xtermMsg, {
                         sessionEnd: true
                     });
-                    const msg: string = data.res === "Q.E.D." ? `Proof completed successfully!\nThe proof has been saved. You can now <span class="btn btn-sm btn-primary btn-help close-action m-0 p-0">close</span> the prover console.`
+                    const msg: string = isQEDProofState(data.res) ? `Proof completed successfully!\nThe proof has been saved. You can now <span class="btn btn-sm btn-primary btn-help close-action m-0 p-0">close</span> the prover console.`
                         : `Prover session terminated.\nYou can now <span class="btn btn-sm btn-primary btn-help close-action m-0 p-0">close</span> the prover console.`;
                     // send the message after a timeout, to avoid overwrites due to automatic updates of the help panel
                     setTimeout(() => {
                         this.showHelpMessage(msg);
+                        // disable response handlers
+                        this.terminateSession();
                     }, 500);
-                    // disable response handlers
-                    this.terminateSession();
                 } else {
                     console.log(`[${fsUtils.generateTimestamp()}] `+data.res);
                 }
@@ -453,8 +461,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
                 });
                 this.log(sequent, { hints, mathObjects: this.mathObjects });
                 // show prompt unless QED 
-                if(! isQEDProofState(data.res))
-                    this.showPrompt();
+                if(!isQEDProofState(data.res)) { this.showPrompt(); }
                 commands.executeCommand("xterm.did-execute-command");
             }
         }
@@ -537,7 +544,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
         this.client.sendRequest(serverRequest.startEvaluator, theory);
         const success: boolean = await new Promise((resolve, reject) => {
             this.client.onRequest(serverEvent.startEvaluatorResponse, (data: { response: PvsResponse, args: PvsTheory, error?: string }) => {
-              console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.startEvaluatorResponse} - param: ${data} `); // #DEBUG
+              console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.startEvaluatorResponse} - param: ${JSON.stringify(data)} `); // #DEBUG
                 if (data?.response) {
                     const banner: string = colorUtils.colorText(
                         (data.response.result?.version?
@@ -725,7 +732,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
             if (this.sessionType === "evaluator") {
                 this.client.sendRequest(serverRequest.evaluatorCommand, req);
                 this.client.onRequest(serverEvent.evaluatorCommandResponse, (data: EvaluatorCommandResponse) => {
-                  console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.evaluatorCommandResponse} - param: ${data} `); // #DEBUG
+                  console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.evaluatorCommandResponse} - param: ${JSON.stringify(data)} `); // #DEBUG
                     this.onEvaluatorResponse(data);
                     resolve(data)
                 });
@@ -745,7 +752,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
 				if (parens?.success) {
                     this.client.sendRequest(serverRequest.proofCommand, req);
                     this.client.onRequest(serverEvent.proofCommandResponse, (data: ProofCommandResponse) => {
-                      console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.proofCommandResponse} - param: ${data} `); // #DEBUG
+                      console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.proofCommandResponse} - param: ${JSON.stringify(data)} `); // #DEBUG
                         this.onProverResponse(data);
                         const success: boolean = data ? 
                             typeof data.res === "string" ? isQEDCommand(data.res)
@@ -1062,7 +1069,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
         this.panel?.webview?.postMessage(message);
     }
     /**
-     * Internal function, disabled handlers and marks the session as terminated
+     * Internal function, disables handlers and marks the session as terminated
      */
     protected terminateSession (): void {
         // disable handlers
