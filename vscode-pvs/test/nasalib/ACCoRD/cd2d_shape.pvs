@@ -1,0 +1,92 @@
+cd2d_shape[D:posreal] : THEORY
+BEGIN
+
+  IMPORTING cd2d,
+            horizontal,
+	    vectors@vect2_more,
+            shapes@shapes_2D
+
+  cd2d_rectangle : LEMMA
+    FORALL(so,si:Vect2,v:Nz_vect2,T:posreal) :
+      LET s   = so-si,
+          vD = hmd_tangent_point[D](v),
+          A   = so+vD,
+          B   = so-vD,
+          vT  = T*v IN    
+      point_strictly_in_rectangle?(mk_rectangle(A,B,-norm(vT)))(si)
+      IFF
+       abs(s*perpL(^(v))) < D AND
+       0 < -s*v < T *sqv(v)
+
+  cd2d_rectangle_tcpa : LEMMA
+    FORALL(so,si:Vect2,v:Nz_vect2,T:posreal) :
+      LET s   = so-si,
+          vD  = hmd_tangent_point[D](v),
+          A   = so+vD,
+          B   = so-vD,
+          vT  = T*v IN    
+      point_strictly_in_rectangle?(mk_rectangle(A,B,-norm(vT)))(si)
+      IFF
+      LET tcpa = horizontal_tca(s, v) IN
+       sqv(s + tcpa*v) < sq(D) AND
+       0 < tcpa < T      
+
+  cd2d_circular_segment_divergent : LEMMA
+    FORALL(so,si:Vect2,v:Nz_vect2) :
+      LET s = so-si,
+          vD = hmd_tangent_point[D](v),
+          A = so+vD,
+          B = so-vD IN
+      point_strictly_in?(mk_circular_segment(A,so,B),FALSE)(si) IFF
+      (sqv((s)) < sq(D) AND s*v >= 0)
+
+  cd2d_circular_segment_convergent : LEMMA
+    FORALL(so,si:Vect2,v:Nz_vect2) :
+      LET s = so-si,
+          vD = hmd_tangent_point[D](v),
+          A = so-vD,
+          B = so+vD IN
+      point_strictly_in?(mk_circular_segment(A,so,B),FALSE)(si) IFF
+      (sqv((s)) < sq(D) AND s*v <= 0)
+
+  cd2d_hazard_zone(so,v:Vect2,T:nnreal) : shapes_2D =
+    IF T=0 OR zero_vector?(v) THEN
+      (: Circle(mk_circle(so,D)) :)
+    ELSE
+      LET vD = hmd_tangent_point[D](v),
+          A   = so+vD,
+          B   = so-vD,
+          vT  = T*v,
+          soT = so+vT,
+          C   = soT-vD,
+          D   = soT+vD IN    
+      (: CircularSegment(mk_circular_segment(A,so,B)), 
+         Rectangle(mk_rectangle(A,B,-norm(vT))),
+         CircularSegment(mk_circular_segment(C,soT,D)) :)
+    ENDIF
+
+  cd2d_haz_soundness : LEMMA
+    FORALL(so,vo,si,vi:Vect2,T:nnreal,ss:shapes_2D) :
+      LET s = so-si,
+          v = vo-vi,
+          ss = cd2d_hazard_zone(so,v,T) IN
+      point_strictly_in?(ss)(si) IMPLIES
+      EXISTS (t:Lookahead[0,T]): horizontal_los?[D](s+t*v)
+
+  cd2d_haz_completeness : LEMMA
+    FORALL(so,vo,si,vi:Vect2,T:nnreal,ss:shapes_2D) :
+      LET s = so-si,
+          v = vo-vi,
+          ss = cd2d_hazard_zone(so,v,T) IN
+      (EXISTS (t:Lookahead[0,T]): horizontal_los?[D](s+t*v)) IMPLIES
+      point_strictly_in?(ss)(si) 
+
+  cd2d_haz_correctness : THEOREM
+    FORALL(so,vo,si,vi:Vect2,T:nnreal,ss:shapes_2D) :
+      LET s = so-si,
+          v = vo-vi,
+          ss = cd2d_hazard_zone(so,v,T) IN
+      point_strictly_in?(ss)(si) IFF
+      EXISTS (t:Lookahead[0,T]): horizontal_los?[D](s+t*v)
+
+END cd2d_shape
