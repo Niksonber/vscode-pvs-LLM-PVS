@@ -1168,6 +1168,7 @@ export type PvsProofState = {
 																			 // - '!' closed branch;
 																			 // - '*' pending goals, but proceeding;
 																			 // - '?' sub-goals created.
+																			 // - 'quit' the proof attempt has been terminated @PM
 };
 
 // the lookup table provides different view on the library content (folders, theories, etc)

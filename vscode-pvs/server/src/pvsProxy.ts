@@ -94,6 +94,12 @@ interface PathCacheDesc {
 	libPaths: { [key: string]: string };
 }
 
+// utility function, returns the proof ID indicated in a PVS response, if this is available
+export function getProofId (res: PvsResponse): string {
+	return res?.result?.length > 0 ? res.result[0].id : null;
+}
+
+
 export class PvsProxy {
 	// protected parserCache: { [ filename: string ]: { hash: string, diags: ParserDiagnostics, isTypecheckError?: boolean } } = {};
 	protected activeParsers: { [filename: string]: boolean } = {};

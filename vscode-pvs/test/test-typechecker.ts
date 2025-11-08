@@ -14,7 +14,7 @@ import { expect } from 'chai';
 //   Test cases for typechecker
 //----------------------------
 describe("pvs-typechecker", () => {
-    let pvsProxy: PvsProxy | undefined = undefined;
+    let pvsProxy: PvsProxy;
     before(async () => {
         const config: string = await fsUtils.readFile(configFile);
         const content: { pvsPath: string } = JSON.parse(config);
@@ -61,7 +61,7 @@ describe("pvs-typechecker", () => {
 
     it(`can typecheck files`, async () => {
         label(`can typecheck files`);
-        const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({ fileName: "sqrt", fileExtension: ".pvs", contextFolder: sandboxExamples });
+        const response: PvsResponse = await pvsProxy?.typecheckFile({ fileName: "sqrt", fileExtension: ".pvs", contextFolder: sandboxExamples });
         // console.dir(response);
         expect(response).not.to.equal(undefined);
         expect(response?.result).not.to.equal(undefined);
@@ -69,7 +69,7 @@ describe("pvs-typechecker", () => {
 
     it(`can report typecheck errors in imported files`, async () => {
         label(`can report typecheck errors in imported files`);
-        const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({ fileName: "test", fileExtension: ".pvs", contextFolder: sandboxExamples });
+        const response: PvsResponse = await pvsProxy?.typecheckFile({ fileName: "test", fileExtension: ".pvs", contextFolder: sandboxExamples });
         // console.dir(response);
         expect(response).not.to.be.undefined;
         expect(response?.result).not.to.equal(null);
@@ -90,7 +90,7 @@ describe("pvs-typechecker", () => {
             // theoryName: "pump_th"
         };
 
-        let response: PvsResponse | undefined = await pvsProxy?.typecheckFile(desc);
+        let response: PvsResponse = await pvsProxy?.typecheckFile(desc);
         console.dir(response);
         expect(response).not.to.be.undefined;
         expect(response?.result).not.to.be.undefined;
@@ -100,8 +100,8 @@ describe("pvs-typechecker", () => {
 
     it(`can typecheck pvs files that import other files`, async () => {
         label(`can typecheck pvs files that import other files`);
-        // const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({ fileName: "sqrt", fileExtension: ".pvs", contextFolder: sandboxExamples });
-        const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({ fileName: "main", fileExtension: ".pvs", contextFolder: sandboxExamples });
+        // const response: PvsResponse = await pvsProxy?.typecheckFile({ fileName: "sqrt", fileExtension: ".pvs", contextFolder: sandboxExamples });
+        const response: PvsResponse = await pvsProxy?.typecheckFile({ fileName: "main", fileExtension: ".pvs", contextFolder: sandboxExamples });
         console.dir(response);
         expect(response).not.to.be.undefined;
         //expect(response.result).toEqual(test.typecheck1_result);
@@ -109,7 +109,7 @@ describe("pvs-typechecker", () => {
 
     it(`can generate .tcc file content`, async () => {
         label(`can generate .tcc file content`);
-        const response: PvsResponse | undefined = await pvsProxy?.generateTccsFile({
+        const response: PvsResponse = await pvsProxy?.generateTccsFile({
             fileName: "sqrt",
             fileExtension: ".pvs",
             theoryName: "sqrt",
@@ -120,7 +120,7 @@ describe("pvs-typechecker", () => {
         expect(response?.error).to.be.undefined;
         expect(response?.result).not.to.equal(null);
 
-        const response1: PvsResponse | undefined = await pvsProxy?.generateTccsFile({
+        const response1: PvsResponse = await pvsProxy?.generateTccsFile({
             fileName: "alaris2lnewmodes",
             fileExtension: ".pvs",
             theoryName: "alaris_th",
@@ -136,7 +136,7 @@ describe("pvs-typechecker", () => {
 
         await pvsProxy?.emptyAllWorkspaces();
 
-        const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({
+        const response: PvsResponse = await pvsProxy?.typecheckFile({
             fileName: "helloworld",
             fileExtension: ".pvs",
             contextFolder: dependable_plus_safe
@@ -155,7 +155,7 @@ describe("pvs-typechecker", () => {
             // Need to clear-theories, in case rerunning with the same server.
             await pvsProxy?.emptyAllWorkspaces();
 
-            const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({
+            const response: PvsResponse = await pvsProxy?.typecheckFile({
                 fileName: steverFiles[i],
                 fileExtension: ".pvs",
                 contextFolder: stever
@@ -173,7 +173,7 @@ describe("pvs-typechecker", () => {
             // Need to clear-theories, in case rerunning with the same server.
             await pvsProxy?.emptyAllWorkspaces();
 
-            const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({
+            const response: PvsResponse = await pvsProxy?.typecheckFile({
                 fileName: pillboxFiles[i],
                 fileExtension: ".pvs",
                 contextFolder: pillbox
@@ -184,26 +184,36 @@ describe("pvs-typechecker", () => {
 
         }).timeout(40000);
     }
+    /**
+     * Unable to typecheck theory 'display'
+        error_string: 'substr(d(disp), 0, len(disp) - 2)\n' +
+            'does not have a unique type - one of:\n' +
+            '  string,\n' +
+            '  {s1: charstring | length(s1) = len(disp) - 2},\n' +
+            '  {s1: string | length(s1) = len(disp) - 2}\n' +
+            ' \n' +
+            'In file ./test/pvsioweb/calc/display.pvs (line 41, col 22)',
+     */
     for (let i = 0; i < pvsiowebFiles.length; i++) {
-        //(let i = 0; i < pvsiowebFiles.length; i++) {
-        // 34, 45 signal; 0, len ok if 44 excluded
-        it(`can typecheck pvsioweb/${pvsiowebFiles[i]}.pvs`, async () => {
-        label(`can typecheck pvsioweb/${pvsiowebFiles[i]}.pvs`);
-            // Need to clear-theories, in case rerunning with the same server.
-            await pvsProxy?.emptyAllWorkspaces();
-            const response: PvsResponse | undefined = await pvsProxy?.typecheckFile({
-                fileName: pvsiowebFiles[i],
-                fileExtension: ".pvs",
-                contextFolder: pvsioweb
-            });
-            expect(response).not.to.be.undefined;
-            if (pvsiowebFiles[i].endsWith("MDNumberpaddd")) {
-                expect(response?.error).not.to.be.undefined; // theory 'limits' declared twice in the same workspace
-            } else {
-                // console.dir({ response });
-                expect(response?.result).not.to.be.undefined;
-                expect(response?.error).to.be.undefined;
-            }
-        }).timeout(60000);
+        // if (pvsiowebFiles[i].endsWith("display")) {
+            it(`can typecheck pvsioweb/${pvsiowebFiles[i]}.pvs`, async () => {
+            label(`can typecheck pvsioweb/${pvsiowebFiles[i]}.pvs`);
+                // Need to clear-theories, in case rerunning with the same server.
+                await pvsProxy?.emptyAllWorkspaces();
+                const response: PvsResponse = await pvsProxy?.typecheckFile({
+                    fileName: pvsiowebFiles[i],
+                    fileExtension: ".pvs",
+                    contextFolder: pvsioweb
+                });
+                expect(response).not.to.be.undefined;
+                if (pvsiowebFiles[i].endsWith("MDNumberpaddd")) {
+                    expect(response?.error).not.to.be.undefined; // theory 'limits' declared twice in the same workspace
+                } else {
+                    console.dir({ response }, { depth: null });
+                    expect(response?.result).not.to.be.undefined;
+                    expect(response?.error).to.be.undefined;
+                }
+            }).timeout(60000);
+        // }
     }
 });

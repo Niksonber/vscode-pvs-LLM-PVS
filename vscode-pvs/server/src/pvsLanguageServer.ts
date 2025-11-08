@@ -113,6 +113,7 @@ interface Settings {
 	maxNumberOfProblems: number;
 }
 
+// PVS Language Server class
 export class PvsLanguageServer extends fsUtils.PostTask {
 	protected MAX_PARALLEL_PROCESSES: number = 1; // pvs 7.1 currently does not support parallel processes
 	readonly MIN_PVS_VERSION: number = 8.0;

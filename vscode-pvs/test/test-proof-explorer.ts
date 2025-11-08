@@ -517,7 +517,7 @@ describe("proof-explorer", () => {
     	expect(res.success).to.be.true;
     }).timeout(80000);
 
-    it.only(`can handle trivial proofs`, async () => {
+    it(`can handle trivial proofs`, async () => {
         label(`can handle trivial proofs`);
 
         let proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
