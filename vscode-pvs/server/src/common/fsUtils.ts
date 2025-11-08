@@ -2500,6 +2500,7 @@ export function formatSequent (desc: PvsProofState, opt?: {
 }): string {
 	if (desc) {
 		opt = opt || {};
+		let deemedAsQED: boolean = isQEDProofState(desc);
 		let res: string = "";
 		if (!opt.formulasOnly) {
 			if (desc.action && opt.showAction) {
@@ -2507,10 +2508,23 @@ export function formatSequent (desc: PvsProofState, opt?: {
 				res += opt.htmlEncoding ? `<br>${action}.<br>` : `\n${action}.\n`;
 			}
 			if (desc.commentary && !opt.ignoreCommentary) {
+				if (deemedAsQED) {
+					// clean up the commentary by removing all comments before "Q.E.D."
+					let foundQED: boolean = false;
+					const cleanCommentary: string[] = [];
+					for (let i = 0; i < desc.commentary.length; i++) {
+						if (!foundQED && isQEDCommand(desc.commentary[i])) {
+							foundQED = true;
+						}
+						if (foundQED) {
+							cleanCommentary.push(desc.commentary[i]);
+						}
+					}
+					desc.commentary = cleanCommentary;
+				}
 				res += commentaryToString(desc.commentary, opt);
 			}
 		}
-		let deemedAsQED: boolean = isQEDProofState(desc);
 		// print sequent, label and comment only if 
 		// - the sequent is non-empty (sequent empty means proof completed)
 		// - the commentary string does not indicate error

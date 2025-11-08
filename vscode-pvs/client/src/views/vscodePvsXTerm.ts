@@ -64,6 +64,7 @@ import { balancePar, checkPar, CheckParResult, getHints, isInvalidCommand, isQED
 import { VSCodePvsProofExplorer } from './vscodePvsProofExplorer';
 import { YesNoCancel } from '../utils/vscode-utils';
 import { isQEDProofState } from '../common/languageUtils';
+import { commentaryToString } from '../common/fsUtils';
 
 export enum XTermPvsEvent {
     DidCloseTerminal = "DidCloseTerminal",
@@ -386,12 +387,12 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
                     this.onProverResponse(data, { ignoreCommentary: true });
                     this.enableTerminalInput();
                     this.showWelcomeMessage();
-                    if (isQEDProofState(data?.res) && typeof data.res === "object") {
-                        const msg: string = fsUtils.formatSequent(data?.res, { 
+                    if (isQEDProofState(data?.res)) {
+                        const msg: string = typeof data.res === "object" ? fsUtils.formatSequent(data?.res, { 
                             colorTheme: this.colorTheme, 
                             colorizeParens: this.colorizeParens,
                             useColors: true
-                        });
+                        }) : data.res;
                         this.log(msg?.trim());
                     }
                 }
@@ -414,34 +415,45 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
     protected onProverResponse (data: ProofCommandResponse, opt?: { ignoreCommentary?: boolean }): void {
         opt = opt || {};
         if (data) {
-            if (isQEDProofState(data.res) || typeof data.res === "string") {
-                if (isQEDProofState(data.res) || data.res === "bye!") {
-                    const xtermMsg: string = (data.res === "bye!"? colorUtils.colorText(data.res, colorUtils.getColor(colorUtils.PvsColor.green, this.colorTheme)) : "");
-                    this.log("\n" + xtermMsg, {
-                        sessionEnd: true
-                    });
-                    const msg: string = isQEDProofState(data.res) ? `Proof completed successfully!\nThe proof has been saved. You can now <span class="btn btn-sm btn-primary btn-help close-action m-0 p-0">close</span> the prover console.`
-                        : `Prover session terminated.\nYou can now <span class="btn btn-sm btn-primary btn-help close-action m-0 p-0">close</span> the prover console.`;
-                    // send the message after a timeout, to avoid overwrites due to automatic updates of the help panel
-                    setTimeout(() => {
-                        this.showHelpMessage(msg);
-                        // disable response handlers
-                        this.terminateSession();
-                    }, 500);
-                } else {
-                    console.log(`[${fsUtils.generateTimestamp()}] `+data.res);
-                }
-            } else {
-                // res is a SequentDescriptor
-                // echo last command if the response was not originated by xterm
-                if (data.req?.cmd && data.req?.origin !== "xterm-pvs") {
+            // echo last command if the response was not originated by xterm
+            if (typeof data.res === "object" && data.req?.cmd) {
+                if (data.req?.origin !== "xterm-pvs") {
                     // this.log(`${utils.colorText(utils.proverPrompt, pvsColor.blue, true)} ${data.req.cmd}`,);
-                    this.clearCommandLine();
                     this.log(data.req.cmd);
                 }
-                if (data.req?.cmd && !isInvalidCommand(data.res)) {
+                if (!isInvalidCommand(data.res)) {
                     this.updateCommandHistory(data.req.cmd);
                 }
+            }
+            // echo proof state and commentary as appropriate
+            let terminated: boolean = isQEDProofState(data.res) || (data.res === "bye!") || this.sessionTerminated();
+            let xtermMsg: string = "";
+            // PVS returns QED twice, one time just the QED string, another time an object with the sequent and a more detailed commentary, we want to show QED only once with the detailed commentary
+            if (typeof data.res === "object" && isQEDProofState(data.res)) {
+                xtermMsg = fsUtils.formatSequent(data.res, { 
+                    colorTheme: this.colorTheme, 
+                    colorizeParens: this.colorizeParens,
+                    useColors: true
+                });
+            }
+            if (data.res === "bye!") {
+                xtermMsg = colorUtils.colorText(data.res, colorUtils.getColor(colorUtils.PvsColor.green, this.colorTheme));
+            }
+            if (typeof data.res === "object" && terminated) {
+                this.log("\n" + xtermMsg, {
+                    sessionEnd: true
+                });
+                // disable response handlers
+                this.terminateSession();
+                // show feedback on the help panel message after a timeout, to avoid overwrites due to automatic updates of the help panel
+                const msg: string = isQEDProofState(data.res) ? `Proof completed successfully!\nThe proof has been saved. You can now <span class="btn btn-sm btn-primary btn-help close-action m-0 p-0">close</span> the prover console.`
+                    : `Prover session terminated.\nYou can now <span class="btn btn-sm btn-primary btn-help close-action m-0 p-0">close</span> the prover console.`;
+                setTimeout(() => {
+                    this.showHelpMessage(msg);
+                }, 500);
+            }
+            if (typeof data.res === "object" && !terminated) {
+                // res is a SequentDescriptor
                 // load prettyprinter from vscode configuration
                 const pp: string = this.prettyPrinter?.file; //vscodeUtils.getPrettyPrinter();
                 // console.log(`[${fsUtils.generateTimestamp()}] `+{ pp }); // debug #TODO remove
@@ -753,6 +765,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
                     this.client.sendRequest(serverRequest.proofCommand, req);
                     this.client.onRequest(serverEvent.proofCommandResponse, (data: ProofCommandResponse) => {
                       console.log(`[${fsUtils.generateTimestamp()}] `+`[vscodePvsXTerm] responding request ${serverEvent.proofCommandResponse} - param: ${JSON.stringify(data)} `); // #DEBUG
+                        data.req = req; // copy request to make sure meta fields are preserved, e.g., 'origin', as this is needed by the prover console to show correct feedback
                         this.onProverResponse(data);
                         const success: boolean = data ? 
                             typeof data.res === "string" ? isQEDCommand(data.res)

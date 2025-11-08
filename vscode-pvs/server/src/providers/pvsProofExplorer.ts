@@ -495,9 +495,10 @@ export class PvsProofExplorer {
 				for (let i = 0; i < affectedProofStates.length; i++) {
 					const currCmd: string = response.result[0]["curr-cmd"];
 					const proofState: PvsProofState = response.result[i]; // process proof commands
-					i === 0 ? 
-						await this.checkProofTermination({ proofState, args: command }, opt)
-						: await this.onStepExecuted({ proofState, currCmd, args: command, lastSequent: i === affectedProofStates.length - 1 }, opt);
+					if (i === 0) { await this.checkProofTermination({ proofState, args: command }, opt); }
+					if (i > 0 || affectedProofStates.length === 1) {
+						await this.onStepExecuted({ proofState, currCmd, args: command, lastSequent: i === affectedProofStates.length - 1 }, opt);
+					}
 				}
 				// if a proof is running, then iterate
 				if (this.runningFlag && !this.ghostNode.isActive()) {
