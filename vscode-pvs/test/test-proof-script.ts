@@ -1,6 +1,6 @@
 import * as fsUtils from "../server/src/common/fsUtils";
 import { PvsResponse } from "../server/src/common/pvs-gui";
-import { PvsProxy } from '../server/src/pvsProxy'; // XmlRpcSystemMethods
+import { getProofId, PvsProxy } from '../server/src/pvsProxy'; // XmlRpcSystemMethods
 import { label, log, configFile, sandboxExamples, helloworldExamples } from './test.utils';
 import { ProofDescriptor, PvsFormula } from "../server/src/common/serverInterface";
 import { expect } from 'chai';
@@ -9,7 +9,7 @@ import { expect } from 'chai';
 //   Test cases for proofScript
 //----------------------------
 describe("proofScript", () => {
-    let pvsProxy: PvsProxy | undefined = undefined;
+    let pvsProxy: PvsProxy;
     before(async () => {
         const config: string = await fsUtils.readFile(configFile);
         const content: { pvsPath: string } = JSON.parse(config);
@@ -48,7 +48,7 @@ describe("proofScript", () => {
             formulaName: "sq_neg",
             theoryName: "sq"
         };
-        const response: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(formula);
+        const response: PvsResponse = await pvsProxy?.getDefaultProofScript(formula);
         //console.dir(response);
         expect(response).not.to.be.undefined;
         expect(response?.error).to.be.undefined;
@@ -56,54 +56,6 @@ describe("proofScript", () => {
         const proof_header: string = response?.result.split("\n")[0];
         expect(proof_header).to.match(/;;; Proof sq_neg-(\d+) for formula sq.sq_neg/);
     });
-
-    it(`returns a well-formed empty pvs proof script when the proof file is not available`, async () => {
-        // a well-formed response for formula sqrt_0 is in the form /;;; Proof sqrt_0(\-\d+)? for formula sqrt.sqrt_0\n(""\s*)/
-        const formula: PvsFormula = {
-            contextFolder: sandboxExamples,
-            fileExtension: ".pvs",
-            fileName: "sqrt",
-            formulaName: "sqrt_0",
-            theoryName: "sqrt"
-        };
-        const response: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(formula);
-        // console.dir(response);
-        expect(response).not.to.be.undefined;
-        expect(response?.result).to.be.undefined;
-        expect(response?.error).not.to.be.undefined;
-        expect(response?.error.data.error_string).to.match(/(.*) does not have a proof/);
-
-        const formula1: PvsFormula = {
-            contextFolder: sandboxExamples,
-            fileExtension: ".pvs",
-            fileName: "alaris2lnewmodes.pump",
-            formulaName: "vtbi_over_rate_lemma",
-            theoryName: "pump_th"
-        }
-        const response1: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(formula1);
-        // console.dir(response1);
-        expect(response1).not.to.be.undefined;
-        expect(response1?.result).to.be.undefined;
-        expect(response1?.error).not.to.be.undefined;
-        expect(response1?.error.data.error_string).to.match(/(.*) does not have a proof/);
-
-        const formula3: PvsFormula = {
-            contextFolder: sandboxExamples,
-            fileExtension: ".pvs",
-            fileName: "sq",
-            formulaName: "sq_plus_pos",
-            theoryName: "sq"
-        };
-        await pvsProxy?.changeContext(formula3);
-        await pvsProxy?.typecheckFile(formula3);
-        const response3: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(formula3);
-        // const response3: PvsResponse | undefined = await pvsProxy?.lisp(`(get-default-proof-script "${formula3.theoryName}" "${formula3.formulaName}")`);
-        // console.dir(response3?.result);
-        expect(response3).not.to.be.undefined;
-        expect(response3?.result).to.be.undefined;
-        expect(response3?.error).not.to.be.undefined;
-        expect(response3?.error.data.error_string).to.match(/(.*) does not have a proof/);
-    }).timeout(10000);
 
     it(`can load & save vscode-pvs proof files`, async () => {
         await quitProverIfActive();
@@ -115,10 +67,10 @@ describe("proofScript", () => {
             formulaName: "sq_plus_eq_0",
             theoryName: "sq"
         };
-        let response: PvsResponse | undefined = await pvsProxy?.proveFormula(formula);
+        let response: PvsResponse = await pvsProxy?.proveFormula(formula);
         expect(response).not.to.be.undefined;
         if(response != undefined){
-            let prfid: string = response?.result.id;
+            const prfid: string = getProofId(response);
             response = await pvsProxy?.proofCommand({ proofId: prfid, cmd: "(grind)" });
             expect(response).not.to.be.undefined;
             response = await pvsProxy?.proofCommand({ proofId: prfid, cmd: "(quit)" });
@@ -131,7 +83,7 @@ describe("proofScript", () => {
         }
     });
 
-    // this test fails: save proof saves an empty proof in the prf file for vtbi_over_rate_lemma.
+    // this test used to fail: save proof saves an empty proof in the prf file for vtbi_over_rate_lemma.
     // additionally, pvs-server takes 100% of the cpu at the end of this test
     it(`saves only the current proof, and leaves all other proofs untouched`, async () => {
         await quitProverIfActive();
@@ -142,7 +94,7 @@ describe("proofScript", () => {
             formulaName: "vtbi_over_rate_lemma",
             theoryName: "pump_th"
         }
-        let response1: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(formula1);
+        let response1: PvsResponse = await pvsProxy?.getDefaultProofScript(formula1);
         // console.dir(response1);
         expect(response1?.result).to.be.undefined;
         expect(response1?.error).not.to.be.undefined;
@@ -156,7 +108,7 @@ describe("proofScript", () => {
             formulaName: "sq_plus_eq_0",
             theoryName: "sq"
         };
-        let response: PvsResponse | undefined = await pvsProxy?.proveFormula(formula);
+        let response: PvsResponse = await pvsProxy?.proveFormula(formula);
         expect(response).not.to.be.undefined;
 
         if(response != undefined){
@@ -182,7 +134,7 @@ describe("proofScript", () => {
     });
 
     it(`can generate backup files if vscode-pvs proof file is corrupted`, async () => {
-        label(`can generate backup files if vscode-pvs proof file is corrupted`);
+        // label(`can generate backup files if vscode-pvs proof file is corrupted`);
 
         // create a corrupted jprf file
         const fname: string = fsUtils.desc2fname({
@@ -205,7 +157,7 @@ describe("proofScript", () => {
             formulaName: "sq_plus_eq_0",
             theoryName: "sq"
         };
-        const proofDescriptor: ProofDescriptor | undefined = await pvsProxy?.openProofFile({
+        const proofDescriptor: ProofDescriptor = await pvsProxy?.openProofFile({
             contextFolder: formula.contextFolder,
             fileName: formula.fileName,
             fileExtension: ".jprf"
@@ -240,9 +192,9 @@ describe("proofScript", () => {
         await pvsProxy?.changeContext(desc);
         await pvsProxy?.typecheckFile(desc);
         const cmd: string = `(edit-proof-at "${fname}" nil ${line} "pvs" "${desc.fileName}${desc.fileExtension}" 0 nil)`;
-        const response1: PvsResponse | undefined = await pvsProxy?.lisp(cmd);
-        const response2: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(desc);
-        // const response2: PvsResponse | undefined = await pvsProxy?.lisp(`(get-default-proof-script "${desc.theoryName}" "${desc.formulaName}")`);
+        const response1: PvsResponse = await pvsProxy?.lisp(cmd);
+        const response2: PvsResponse = await pvsProxy?.getDefaultProofScript(desc);
+        // const response2: PvsResponse = await pvsProxy?.lisp(`(get-default-proof-script "${desc.theoryName}" "${desc.formulaName}")`);
         //console.dir(response1?.result);
         //console.dir(response2.result);
         expect(response1).not.to.be.undefined;
@@ -259,8 +211,8 @@ describe("proofScript", () => {
             theoryName: "sq"
         };
         await pvsProxy?.changeContext(desc);
-        // const response: PvsResponse | undefined = await pvsProxy?.lisp(`(get-default-proof-script "${desc.theoryName}" "${desc.formulaName}")`);
-        const response: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(desc);
+        // const response: PvsResponse = await pvsProxy?.lisp(`(get-default-proof-script "${desc.theoryName}" "${desc.formulaName}")`);
+        const response: PvsResponse = await pvsProxy?.getDefaultProofScript(desc);
         // console.dir(response);
         expect(response).not.to.be.undefined;
         expect(response?.error).to.be.undefined;
@@ -277,11 +229,11 @@ describe("proofScript", () => {
             theoryName: "helloworld",
             formulaName: "dummy"
         };
-        // const response: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(formula);
-        let response: PvsResponse | undefined = await pvsProxy?.lisp(`(change-workspace "${formula.contextFolder}")`);
+        // const response: PvsResponse = await pvsProxy?.getDefaultProofScript(formula);
+        let response: PvsResponse = await pvsProxy?.lisp(`(change-workspace "${formula.contextFolder}")`);
         response = await pvsProxy?.lisp(`(typecheck-file "${fsUtils.desc2fname(formula)}" nil nil nil nil t)`);
         response = await pvsProxy?.lisp(`(get-default-proof-script "helloworld" "dummy")`);
-        console.log(response);
+        // console.log(response);
         expect(response).not.to.be.undefined;
         expect(response?.result).to.be.null;
     });
@@ -294,12 +246,12 @@ describe("proofScript", () => {
             theoryName: "dummy",
             formulaName: "withComments"
         };
-        // const response: PvsResponse | undefined = await pvsProxy?.getDefaultProofScript(formula);
-        let response: PvsResponse | undefined = await pvsProxy?.lisp(`(change-workspace "${formula.contextFolder}")`);
+        // const response: PvsResponse = await pvsProxy?.getDefaultProofScript(formula);
+        let response: PvsResponse = await pvsProxy?.lisp(`(change-workspace "${formula.contextFolder}")`);
         response = await pvsProxy?.lisp(`(typecheck-file "${fsUtils.desc2fname(formula)}" nil nil nil nil t)`);
-        let lisp: PvsResponse | undefined = await pvsProxy?.lisp(`#+allegro "allegro" #+sbcl "sbcl"`);
+        let lisp: PvsResponse = await pvsProxy?.lisp(`#+allegro "allegro" #+sbcl "sbcl"`);
         expect(lisp).not.to.be.undefined;
-        const proofDescriptor: ProofDescriptor | undefined = await pvsProxy?.openProofFile({
+        const proofDescriptor: ProofDescriptor = await pvsProxy?.openProofFile({
             contextFolder: formula.contextFolder,
             fileName: formula.fileName,
             fileExtension: ".prf"
@@ -414,4 +366,64 @@ describe("proofScript", () => {
             });
         }
     });
+
+    /**
+     * This test fails intermittently with the following error
+        {
+            error: {
+                code: -32700,
+                message: 'PVS Error',
+                data: 'The value\n  NIL\nis not of type\n  PVS::CONTEXT-ENTRY'
+            },
+            id: 'f2bbc74e980d6d473617656fcecdefc7dcc9e3b90e22525e7b0c5a6694b36037',
+            jsonrpc: '2.0'
+        }
+     */
+    it(`returns an error when the proof file is not available`, async () => {
+        const formula: PvsFormula = {
+            contextFolder: sandboxExamples,
+            fileExtension: ".pvs",
+            fileName: "sqrt",
+            formulaName: "sqrt_0",
+            theoryName: "sqrt"
+        };
+        const response: PvsResponse = await pvsProxy?.getDefaultProofScript(formula);
+        console.dir(response, { depth: null });
+        expect(response).not.to.be.undefined;
+        expect(response?.result).to.be.undefined;
+        expect(response?.error).not.to.be.undefined;
+        expect(response?.error.data.error_string).to.match(/(.*) does not have a proof/);
+        // console.log({ response: response?.error });
+
+        const formula1: PvsFormula = {
+            contextFolder: sandboxExamples,
+            fileExtension: ".pvs",
+            fileName: "alaris2lnewmodes.pump",
+            formulaName: "vtbi_over_rate_lemma",
+            theoryName: "pump_th"
+        }
+        const response1: PvsResponse = await pvsProxy?.getDefaultProofScript(formula1);
+        // console.dir(response1);
+        expect(response1).not.to.be.undefined;
+        expect(response1?.result).to.be.undefined;
+        expect(response1?.error).not.to.be.undefined;
+        expect(response1?.error.data.error_string).to.match(/(.*) does not have a proof/);
+
+        const formula3: PvsFormula = {
+            contextFolder: sandboxExamples,
+            fileExtension: ".pvs",
+            fileName: "sq",
+            formulaName: "sq_plus_pos",
+            theoryName: "sq"
+        };
+        await pvsProxy?.changeContext(formula3);
+        await pvsProxy?.typecheckFile(formula3);
+        const response3: PvsResponse = await pvsProxy?.getDefaultProofScript(formula3);
+        expect(response3).not.to.be.undefined;
+        expect(response3?.result).to.be.undefined;
+        expect(response3?.error).not.to.be.undefined;
+        expect(response3?.error.data.error_string).to.match(/(.*) does not have a proof/);
+
+    }).timeout(10000);
+
 });

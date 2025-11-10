@@ -86,12 +86,12 @@ describe("proof-explorer", () => {
 
     // note: these tests need to be performed together -- be mindful when skipping them, because this may cause other tests down the line to fail
     it(`can step single proof commands`, async () => {
-        label(`can step single proof commands`);
+        // label(`can step single proof commands`);
 
         await server.proveFormulaRequest(request);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         let root: ProofNodeX = proofExplorer.getProofX();
-        console.dir(root, { depth: null });
+        // console.dir(root, { depth: null });
         expect(root.name).to.deep.equal(request.formulaName);
         expect(root.rules.length).to.equal(0);
 
@@ -107,7 +107,7 @@ describe("proof-explorer", () => {
 
     // at this point, the proof should contain one command (skosimp*), try to send a new command that can will be added to the proof tree
     it(`can append valid proof commands`, async () => {
-        label(`can append valid proof commands`);
+        // label(`can append valid proof commands`);
 
         request.cmd = "(assert)";
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
@@ -115,7 +115,7 @@ describe("proof-explorer", () => {
         await proofExplorer.proofCommandRequest(request);
         const root: ProofNodeX = proofExplorer.getProofX()
 
-        console.dir(root);
+        // console.dir(root);
         expect(root.name).to.deep.equal(request.formulaName);
         expect(root.rules[0].name.toLowerCase()).to.deep.equal("(skosimp*)");
         expect(root.rules[0].type).to.deep.equal("proof-command");
@@ -127,7 +127,7 @@ describe("proof-explorer", () => {
 
     // at this point, the proof should contain two commands (skosimp*)(assert), try to send a new command that won't be added to the proof tree, e.g., because it's not applicable (lift-if)
     it(`understands PVS reporting no change in the proof tree`, async () => {
-        label(`understands PVS reporting no change in the proof tree`);
+        // label(`understands PVS reporting no change in the proof tree`);
 
         request.cmd = "(lift-if)";
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
@@ -135,7 +135,7 @@ describe("proof-explorer", () => {
         await proofExplorer.proofCommandRequest(request);
         const root: ProofNodeX = proofExplorer.getProofX()
 
-        console.dir(root);
+        // console.dir(root);
         expect(root.name).to.deep.equal(request.formulaName);
         expect(root.rules[0].name.toLowerCase()).to.deep.equal("(skosimp*)");
         expect(root.rules[0].type).to.deep.equal("proof-command");
@@ -148,7 +148,7 @@ describe("proof-explorer", () => {
 
     // at this point, the proof contains two commands (skosimp*)(assert), try to send a new command that won't be added to the proof tree, e.g., because it's not applicable (lift-if)
     it(`understands PVS reporting ill formed rule`, async () => {
-        label(`understands PVS reporting ill formed rule`);
+        // label(`understands PVS reporting ill formed rule`);
 
         request.cmd = "(dada)";
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
@@ -156,7 +156,7 @@ describe("proof-explorer", () => {
         await proofExplorer.proofCommandRequest(request);
         const root: ProofNodeX = proofExplorer.getProofX()
 
-        console.dir(root);
+        // console.dir(root);
         expect(root.name).to.deep.equal(request.formulaName);
         expect(root.rules[0].name.toLowerCase()).to.deep.equal("(skosimp*)");
         expect(root.rules[0].type).to.deep.equal("proof-command");
@@ -168,14 +168,14 @@ describe("proof-explorer", () => {
     });
     
     it(`can step a series of proof commands`, async () => {
-        label(`can step a series of proof commands`);
+        // label(`can step a series of proof commands`);
 
         request.cmd = `(assert)(grind)(case "x!1 > 0")(postpone)(grind)`;
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
 
         await proofExplorer.proofCommandRequest(request);
         const root: ProofNodeX = proofExplorer.getProofX();
-        console.dir(root, { depth: null });
+        // console.dir(root, { depth: null });
         expect(root.rules.length).to.equal(4);
         expect(root.rules[0].name.toLowerCase()).to.deep.equal("(skosimp*)");
         expect(root.rules[1].name.toLowerCase()).to.deep.equal("(assert)");
@@ -195,7 +195,7 @@ describe("proof-explorer", () => {
     });
 
     it(`can perform (undo)`, async () => {
-        label(`can perform (undo)`);
+        // label(`can perform (undo)`);
         request.cmd = "(undo)";
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         await proofExplorer.proofCommandRequest(request);
@@ -222,7 +222,7 @@ describe("proof-explorer", () => {
     }).timeout(6000);
 
     it(`can perform (undo undo)`, async () => {
-        label(`can perform (undo undo)`);
+        // label(`can perform (undo undo)`);
         request.cmd = "(undo undo)";
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         await proofExplorer.proofCommandRequest(request);
@@ -260,7 +260,7 @@ describe("proof-explorer", () => {
     }).timeout(6000);
 
     it(`can automatically trim branches if proof structure has changed`, async () => {
-        label(`can automatically trim branches if proof structure has changed`);
+        // label(`can automatically trim branches if proof structure has changed`);
         request.cmd = `(undo)(case "x!1 > 2")`; // the second command will generate two proof branches, so all-typepreds should be trimmed
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         await proofExplorer.proofCommandRequest(request);
@@ -312,7 +312,7 @@ describe("proof-explorer", () => {
 
     //-----
     it(`can start another proof when a prover session has already started`, async () => {
-        label(`can start another proof when a prover session has already started`);
+        // label(`can start another proof when a prover session has already started`);
         const response: PvsResponse | null = await server.proveFormula(request5);
 
         // console.log(response);
@@ -346,7 +346,7 @@ describe("proof-explorer", () => {
     });
 
     it(`can delete a proof and display the correct active node`, async () => {
-        label(`can delete a proof and display the correct active node`);
+        // label(`can delete a proof and display the correct active node`);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         let root: ProofNodeX = proofExplorer.getProofX();
         expect(proofExplorer.isActive({ id: root.id, name: root.name }));
@@ -361,7 +361,7 @@ describe("proof-explorer", () => {
     });
 
     it(`can automatically trim branches at the beginning of a proof, if proof structure has changed`, async () => {
-        label(`can automatically trim branches at the beginning of a proof, if proof structure has changed`);
+        // label(`can automatically trim branches at the beginning of a proof, if proof structure has changed`);
         await server.proveFormulaRequest(request2);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
 
@@ -393,7 +393,7 @@ describe("proof-explorer", () => {
     });
 
     it(`can trim branches with active nodes and correctly re-position the active node`, async () => {
-        label(`can trim branches with active nodes and correctly re-position the active node`);
+        // label(`can trim branches with active nodes and correctly re-position the active node`);
         await server.proveFormulaRequest(request2a);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
 
@@ -435,7 +435,7 @@ describe("proof-explorer", () => {
     });
 
     it(`can save current proof`, async () => {
-        label(`can save current proof`);
+        // label(`can save current proof`);
         await server.getPvsProxy().quitAllProofs();
 
         const formula: PvsFormula = {
@@ -453,7 +453,7 @@ describe("proof-explorer", () => {
     }).timeout(4000);
 
     it(`can start a proof, then interrupt, quit and save current proof`, async () => {
-        label(`can start a proof, then interrupt, quit and save current proof`);
+        // label(`can start a proof, then interrupt, quit and save current proof`);
         let proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
         // console.dir(proverStatus);
         if (proverStatus && proverStatus.result !== "inactive") {
@@ -494,7 +494,7 @@ describe("proof-explorer", () => {
     });
 
     it(`can prove omega_2D_continuous without triggering stack overflow`, async () => {
-        label(`can prove omega_2D_continuous without triggering stack overflow`);
+        // label(`can prove omega_2D_continuous without triggering stack overflow`);
     	let proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
     	// console.dir(proverStatus);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
@@ -513,12 +513,12 @@ describe("proof-explorer", () => {
 
     	await server.proveFormulaRequest(formula, { autorun: true, externalServer: true });
     	const res: { success: boolean, msg?: string } = await server.getProofExplorer().quitProofAndSave();
-    	console.dir(res);
+    	// console.dir(res);
     	expect(res.success).to.be.true;
     }).timeout(80000);
 
     it(`can handle trivial proofs`, async () => {
-        label(`can handle trivial proofs`);
+        // label(`can handle trivial proofs`);
 
         let proverStatus: PvsResult = await server.getPvsProxy().pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
         // console.dir(proverStatus);
@@ -528,12 +528,12 @@ describe("proof-explorer", () => {
         await server.proveFormulaRequest(foo);
         const proofExplorer: PvsProofExplorer = server.getProofExplorer();
         const fmla: PvsFormula = proofExplorer.getFormula();
-        console.dir(fmla, { depth: null});
+        // console.dir(fmla, { depth: null});
         expect(fmla).not.to.be.undefined;
         const node: ProofNodeX = proofExplorer.getActiveNode();
-        console.dir(node, { depth: null});
+        // console.dir(node, { depth: null});
         const status: ProofStatus = proofExplorer.getProofStatus();
-        console.dir(status, { depth: null});
+        // console.dir(status, { depth: null});
         expect(node).not.to.be.undefined;
     });
 });

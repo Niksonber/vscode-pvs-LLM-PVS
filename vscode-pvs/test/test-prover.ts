@@ -158,7 +158,7 @@ describe("pvs-prover", () => {
 
         // send proof command (skosimp*)
         response = await pvsProxy?.proofCommand({ proofId: prfid, cmd: '(skosimp*)' });
-        console.dir({ result: response?.result });
+        // console.dir({ result: response?.result });
         expect(response?.result[1].sequent).not.to.be.undefined;
         expect(response?.result[1]["prev-cmd"].toLowerCase()).to.deep.equal("(skosimp*)");
 
@@ -633,7 +633,7 @@ describe("pvs-prover", () => {
         for (let i = 0; i < cmds.length; i++) {
             response = await pvsProxy?.proofCommand({ proofId, cmd: cmds[i] });
         }
-        console.dir(response, { depth: null });
+        // console.dir(response, { depth: null });
         expect(response?.error).to.be.undefined;
         expect(response?.result).not.to.be.undefined;
     }).timeout(80000);
@@ -659,7 +659,7 @@ describe("pvs-prover", () => {
         expect(response?.error).to.be.undefined;
 
         response = await pvsProxy?.proofCommand({ proofId, cmd: "(quit)" });
-        console.dir({ response }, { depth: null });
+        // console.dir({ response }, { depth: null });
         expect(response).not.to.be.undefined;
         expect(response?.error).to.be.undefined;
 
@@ -734,7 +734,7 @@ describe("pvs-prover", () => {
             theoryName: "helloworld"
         };
         let defaultProofBeforeQuit: PvsResponse = await pvsProxy?.getDefaultProofScript(formula);
-        console.dir(defaultProofBeforeQuit, { depth: null });
+        // console.dir(defaultProofBeforeQuit, { depth: null });
         expect(defaultProofBeforeQuit).not.to.be.undefined;
         expect(defaultProofBeforeQuit?.error).not.to.be.undefined;
         expect(defaultProofBeforeQuit?.error?.data.error_string.endsWith(`${formula.formulaName} does not have a proof`)).to.equal(true);
@@ -760,27 +760,16 @@ describe("pvs-prover", () => {
         expect(defaultProofAfterQuit?.result.endsWith("(\"\" (POSTPONE))")).to.equal(true);
     });
 
-    /**
-     * This test fails with the following exception
-        error: {
-            code: -32700,
-            message: 'PVS Error',
-            data: 'Lock on package COMMON-LISP violated when interning assert while in package PVS.\n' +
-                'See also:\n' +
-                '  The SBCL Manual, Node "Package Locks"\n' +
-                '  The ANSI Standard, Section 11.1.2.1.2'
-        }
-     */
     it(`The quit command stores the proof, but it does not modify the prf file.`, async () => {
         const formula: PvsFormula = {
             contextFolder: helloworldExamples,
             fileExtension: ".pvs",
             fileName: "helloworld",
-            formulaName: "dummy",
+            formulaName: "sqrt2", //"dummy",
             theoryName: "helloworld"
         };
         let proofsInPrfFileBeforeQuit: PvsResponse = await pvsProxy?.getProofScriptsInPrfFile(formula.contextFolder + "/" + formula.fileName);
-        console.dir({ proofsInPrfFileBeforeQuit }, { depth: null });
+        // console.dir({ proofsInPrfFileBeforeQuit }, { depth: null });
         expect(proofsInPrfFileBeforeQuit).not.to.be.undefined;
         expect(proofsInPrfFileBeforeQuit?.error).to.be.undefined;
 

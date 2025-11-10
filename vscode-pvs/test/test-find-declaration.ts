@@ -40,8 +40,7 @@ describe("pvs-proxy", () => {
 
     // this test case fails under MacOS -- the server crashes into Lisp
     it(`can provide the definition of pred`, async () => {
-        label(`can provide the definition of pred`);
-
+        // label(`can provide the definition of pred`);
         const response: PvsResponse | undefined = await pvsProxy?.findDeclaration("pred");
         expect(response).not.to.equal(undefined);
         expect(response?.result).not.to.be.undefined;
@@ -51,10 +50,9 @@ describe("pvs-proxy", () => {
 
     // this test case fails under MacOS --- the parser seems unable to populate the data structures necessary for find-declaration
     it(`can invoke find-declaration`, async () => {
-        label(`can invoke find-declaration`);
+        // label(`can invoke find-declaration`);
         // Need to clear-theories, in case rerunning with the same server.
         await pvsProxy?.emptyAllWorkspaces();
-
         await pvsProxy?.parseFile({
             fileName: "sqrt",
             fileExtension: ".pvs",
@@ -81,8 +79,7 @@ describe("pvs-proxy", () => {
     }).timeout(4000);
 
     it(`is robust to heavy workload with find-declaration`, async () => {
-        label(`is robust to heavy workload with find-declaration`);
-
+        // label(`is robust to heavy workload with find-declaration`);
         let response: PvsResponse | undefined;
         for (let i = 0; i < 10; i++) {
             response = await pvsProxy?.findDeclaration("boolean");
@@ -114,8 +111,7 @@ describe("pvs-proxy", () => {
     }).timeout(10000);
 
     it(`is robust to multiple parallel invocation of find-declaration`, async () => {
-        label(`is robust to multiple parallel invocation of find-declaration `);
-
+        // label(`is robust to multiple parallel invocation of find-declaration `);
         pvsProxy?.findDeclaration("boolean");
         pvsProxy?.findDeclaration("T");
         pvsProxy?.findDeclaration("if_def");
@@ -145,8 +141,7 @@ describe("pvs-proxy", () => {
     }).timeout(4000);
 
     it(`returns a full and well-formed filename in find-declaration`, async () => {
-        label(`returns a full and well-formed filename in find-declaration`);
-
+        // label(`returns a full and well-formed filename in find-declaration`);
         const response: PvsResponse | undefined = await pvsProxy?.findDeclaration("boolean");
         expect(response).not.to.equal(null);
         expect(response).not.to.be.undefined;
@@ -159,11 +154,9 @@ describe("pvs-proxy", () => {
     }).timeout(4000);
 
     it(`can execute find-declaration while parsing`, async () => {
-        label(`can execute find-declaration while parsing`);
-
+        // label(`can execute find-declaration while parsing`);
         // async call
         pvsProxy?.parseFile({ fileName: "alaris2lnewmodes", fileExtension: ".pvs", contextFolder: sandboxExamples });
-
         const response: PvsResponse | undefined = await pvsProxy?.findDeclaration("boolean");
         expect(response).not.to.equal(null);
         expect(response).not.to.be.undefined;

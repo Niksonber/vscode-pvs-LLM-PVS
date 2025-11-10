@@ -1,0 +1,11 @@
+%%
+% @theory: bug_tuple
+% @author: pmasci
+% @date: Mon, 10 Nov 2025 02:38:48 GMT
+%%
+bug_tuple: THEORY
+  BEGIN 
+    tupleType: TYPE = [ nat, nat, nat, nat ]
+    f (t: tupleType): tupleType = (0,1,2,0)
+    
+  END bug_tuple

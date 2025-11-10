@@ -48,6 +48,8 @@ helloworld: THEORY
 
     dummy: LEMMA 1 = 0
 
+    dummy_no_proof: LEMMA 2 = 0
+
   END helloworld
 
 
