@@ -38,7 +38,7 @@ display[N: posnat, MAX_DIGITS: upto(N)]: THEORY
                 val := floor(val(disp) / 10),
                 len := len(disp) - 1 #),
        len(disp) > 1 ->
-             LET dd = substr(d(disp), 0, len(disp) - 2) IN
+             LET dd = stdstr.substr(d(disp), 0, len(disp) - 2) IN
              (# d := dd,
                 val := floor(val(disp) / 10),
                 len := len(disp) - 1 #),
