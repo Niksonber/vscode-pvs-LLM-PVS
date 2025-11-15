@@ -60,7 +60,7 @@ import * as fsUtils from './common/fsUtils';
 import * as path from 'path';
 import * as net from 'net';
 import * as crypto from 'crypto';
-import { SimpleConnection, serverEvent, PvsVersionDescriptor, ProofStatus, ProofDescriptor, ProofFile, PvsFormula, ServerMode, TheoryDescriptor, PvsTheory, FormulaDescriptor, PvsFile, PvsContextDescriptor, FileDescriptor, PvsProofState, MathObjects, ProofOrigin, remoteDetailsDesc, ClientMessage, ContextFolder } from './common/serverInterface';
+import { SimpleConnection, serverEvent, PvsVersionDescriptor, ProofStatus, ProofDescriptor, ProofFile, PvsFormula, ServerMode, TheoryDescriptor, PvsTheory, FormulaDescriptor, PvsFile, PvsContextDescriptor, FileDescriptor, PvsProofState, MathObjects, ProofOrigin, remoteDetailsDesc, ClientMessage, ContextFolder, PvsIoMode } from './common/serverInterface';
 import { Parser } from './core/Parser';
 import * as languageserver from 'vscode-languageserver';
 import { ParserDiagnostics } from './core/pvs-parser/javaTarget/pvsParser';
@@ -153,6 +153,10 @@ export class PvsProxy {
 
 	protected mode: ServerMode = "lisp";
 	protected proverBusy: boolean = false;
+
+	// variables needed for pvsio evaluation requests from pvsio-web
+	protected initialState: string = null;
+	protected lastState: string = null;
 
 	/**
 	 * Parser
@@ -1618,12 +1622,31 @@ export class PvsProxy {
 		return "untried";
 	}
 
-	async evaluateInPvsIoSession(desc: { sessionId: string, expr: string, evaluateAsLisp: boolean }): Promise<PvsResponse> {
+	async evaluateInPvsIoSession(desc: { sessionId: string, expr: string, evaluateAsLisp: boolean }, opt?: { mode?: PvsIoMode }): Promise<PvsResponse> {
 		if (desc) {
+			let expr: string = desc.expr.trim();
+			if (opt?.mode === "state-machine") {
+				// if mode is "state-machine" the theory is structured as a state machine spec
+				// and the expression is a transition to be evaluated on the last machine state
+				// we need to save the initial state and the last machine state
+				// and then update expr with the pattern `LET st = ${this.lastState} IN ${expr}(st)`
+				if (this.initialState) {
+					expr = `LET st = ${this.lastState} IN ${expr}(st)`;
+				}
+			}
 			const res: PvsResponse = await this.pvsRequest('pvsio-eval', 
-				[desc.sessionId, desc.expr, (desc.evaluateAsLisp?"lisp":"pvs")]);
+				[ desc.sessionId, expr, (desc.evaluateAsLisp ? "lisp" : "pvs") ]);
+			if (opt?.mode === "state-machine" && res.result?.pvsResult) {
+				this.lastState = res.result.pvsResult.trim();
+				this.initialState = this.initialState || this.lastState;
+			}
+			if (expr === "quit") {
+				this.initialState = null;
+				this.lastState = null;
+			}
 			return res;
-		} else return null;
+		}
+		return null;
 	}
 
 	async startPvsIo(theory: PvsTheory): Promise<PvsResponse> {

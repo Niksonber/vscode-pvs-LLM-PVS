@@ -70,7 +70,7 @@ import * as utils from './common/languageUtils';
 import * as fsUtils from './common/fsUtils';
 import * as path from 'path';
 import { PvsProxy } from './pvsProxy';
-import { PvsResponse, PvsError, ImportingDecl, TypedDecl, FormulaDecl, TypecheckResult } from './common/pvs-gui';
+import { PvsResponse, PvsError, ImportingDecl, TypedDecl, FormulaDecl, TypecheckResult, PvsIoResult } from './common/pvs-gui';
 import { PvsPackageManager } from './providers/pvsPackageManager';
 import { PvsErrorManager } from './pvsErrorManager';
 import { ProcessCode } from './pvsProcess';
@@ -511,24 +511,28 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 		//     if it ends with a "!", as a lisp expression.
 		const lastCharIdx: number = pvsIoInput.length-1;
 		let tailChar: string = pvsIoInput.charAt(lastCharIdx);
-		if (pvsIoInput === "quit"){
+		if (pvsIoInput === "quit") {
 			tailChar = ";";
-		}	else	
-			pvsIoInput = pvsIoInput.substring(0, lastCharIdx)
+		} else {	
+			pvsIoInput = pvsIoInput.substring(0, lastCharIdx);
+		}
 		let response: PvsResponse;
-		if (tailChar === ";")
-				response = await this.pvsProxy.evaluateInPvsIoSession({sessionId: this.pvsioCurrentSessionId, expr: pvsIoInput, evaluateAsLisp: false});
-		else if(tailChar === "!")
-				response = await this.pvsProxy.evaluateInPvsIoSession({sessionId: this.pvsioCurrentSessionId, expr: pvsIoInput, evaluateAsLisp: true});
-		else {
-				this.pvsErrorManager?.handleEvaluationError({ request: req, response: {jsonrpc: "2.0", id: "N/A", error: { code: -1, message: `Input ${[pvsIoInput]} cannot be evaluated: Unknown termination char`}}});	
-				return; }
-
-				const data: EvaluatorCommandResponse = {
-					req,
-					res: (response && response.result ? response.result : response.error)
-				};
-				this.connection.sendRequest(serverEvent.evaluatorCommandResponse, data);
+		if (tailChar === ";") {
+			response = await this.pvsProxy.evaluateInPvsIoSession({ sessionId: this.pvsioCurrentSessionId, expr: pvsIoInput, evaluateAsLisp: false }, { mode: req.mode });
+		} else if(tailChar === "!") {
+			response = await this.pvsProxy.evaluateInPvsIoSession({sessionId: this.pvsioCurrentSessionId, expr: pvsIoInput, evaluateAsLisp: true});
+		} else {
+			this.pvsErrorManager?.handleEvaluationError({ request: req, response: {jsonrpc: "2.0", id: "N/A", error: { code: -1, message: `Input ${[pvsIoInput]} cannot be evaluated: Unknown termination char`}}});	
+			return;
+		}
+		const data: EvaluatorCommandResponse = {
+			req,
+			res: response?.result || response?.error
+		};
+		if (req.mode === "state-machine" && response?.result) {
+			data.state = (<PvsIoResult> response.result)?.pvsResult.trim();
+		}
+		this.connection.sendRequest(serverEvent.evaluatorCommandResponse, data);
 
 		if (response && response.error) {
 			this.pvsErrorManager?.handleEvaluationError({ request: req, response: <PvsError> response });

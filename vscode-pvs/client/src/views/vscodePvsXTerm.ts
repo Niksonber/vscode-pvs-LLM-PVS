@@ -608,7 +608,7 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
                     });
                     this.log(data.res, { hints });
                     // trigger event for interested listeners, e.g., pvsioweb
-                    this.trigger(XTermPvsEvent.DidReceiveEvaluatorResponse, data);
+                    this.trigger(XTermPvsEvent.DidReceiveEvaluatorResponse, { state: data });
                 } else {
                     let butFirstBL: string = '';
                     if(data.res.debugMsg && data.res.debugMsg.length){
@@ -647,6 +647,10 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
                     const promptIn: string = data.res.promptIn?.trim();
                     if(promptIn){
                         this.setPrompt(promptIn);
+                    }
+                    if (data?.state) {
+                        // trigger event for interested listeners, e.g., pvsioweb
+                        this.trigger(XTermPvsEvent.DidReceiveEvaluatorResponse, data);
                     }
                 }
                 this.showPrompt();

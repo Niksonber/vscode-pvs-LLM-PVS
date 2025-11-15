@@ -160,7 +160,7 @@ export interface TypecheckResult {
   decls: [ ImportingDecl | FormulaDecl | TypedDecl ]
 }
 /**
- * An non-error response
+ * pvs response (non-error response)
  */
 export interface PvsResult {
   jsonrpc: "2.0";
@@ -176,7 +176,23 @@ export interface PvsResult {
     | ShowTCCsResult
     | TypecheckRequest // TODO: update json schema
     | PvsProofState[]
+    | PvsIoResult
   [k: string]: any;
+}
+/**
+ * pvs-io result
+ */
+export interface PvsIoResult {
+  debugMsg: string,
+  errOut: string,
+  inputExpr: string,
+  inputKind: "pvs" | "lisp",
+  promptIn: string,
+  promptOut: string,
+  pvsResult: string,
+  sessionId: string,
+  stdOut: string,
+  tccMsg: string
 }
 export interface HelpResult {
   [k: string]: any;

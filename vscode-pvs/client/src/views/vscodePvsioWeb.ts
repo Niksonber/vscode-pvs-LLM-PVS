@@ -640,7 +640,7 @@ export class VSCodePvsioWeb {
         if (this.data[init]?.value) {
             // send init to the server if the initial state is defined. 
             const initState: string = this.data[init].value;
-            const state: string = await this.sendCommand(initState); // sendCommand will register a listener for serverEvent.evaluatorCommandResponse
+            const state: string = await this.sendCommand(initState, { mode: "state-machine"}); // sendCommand will register a listener for serverEvent.evaluatorCommandResponse
             this.stateMachineInitialized = true;
             return state;
         } 
