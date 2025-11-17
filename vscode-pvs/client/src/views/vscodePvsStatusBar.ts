@@ -190,7 +190,7 @@ export class VSCodePvsStatusBar {
 
     ready(): void {
         const currentStatusMsg: string = this.pvsStatus.getText();
-        if (currentStatusMsg && currentStatusMsg !== "" && currentStatusMsg !== `$(pass) PVS ready` && !currentStatusMsg.startsWith(`$(gear~spin)`))
+        if (currentStatusMsg && currentStatusMsg !== "" && !currentStatusMsg.includes(`$(pass) PVS ready`) && !currentStatusMsg.startsWith(`$(gear~spin)`))
             this.pvsStatus.text(`$(pass) PVS ready - ${currentStatusMsg}`);
         else
             this.pvsStatus.text(`$(pass) PVS ready`);
