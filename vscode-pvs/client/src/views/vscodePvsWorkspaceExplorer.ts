@@ -602,30 +602,15 @@ class FolderOverviewItem extends OverviewItem {
 				}
 			}
 		} else {
-			// this.files = [];
+			this.files = [];
 			this.contextFolder = desc.contextFolder;
 			if (desc.fileDescriptors) {
 				const fnames: string[] = Object.keys(desc.fileDescriptors);
-
-				if (this.files.length > 0) {
-					for (let i = 0; i < fnames.length; i++) {
-						for (let j = 0; j < this.files.length; j++){
-							if (this.files[j].path === fnames[i]) {
-								const item = this.files[j];
-								item.updateFileDescriptor(desc.fileDescriptors[fnames[i]]);
-								break;
-							}
-						}
-					}
-				} else {
-					for (let i = 0; i < fnames.length; i++) {
-						const item: PvsFileItem = new PvsFileItem();
-						item.updateFileDescriptor(desc.fileDescriptors[fnames[i]]);
-						this.files.push(item);
-					}
+				for (let i = 0; i < fnames.length; i++) {
+					const item: PvsFileItem = new PvsFileItem();
+					item.updateFileDescriptor(desc.fileDescriptors[fnames[i]]);
+					this.files.push(item);
 				}
-
-
 				// this.sort();
 			}
 		}
