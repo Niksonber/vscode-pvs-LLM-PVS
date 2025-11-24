@@ -803,7 +803,7 @@
 			{
 				"command": "proof-explorer.edit-node",
 				"title": "Edit",
-				"enablement": "pvs-server-active",
+				"enablement": "pvs-server-active && viewItem != proof-branch",
 				"icon": "$(edit)",
 				"category": "pvs"
 			},
