@@ -1222,10 +1222,10 @@ export class VSCodePvsXTerm extends Backbone.Model implements Terminal {
                                             break;
                                         }
                                         case XTermEvent.escapeKeyPressed: {
-                                            // close the console if this is a prover session
-                                            if (this.sessionTerminated()) {
-                                                this.dispose();
-                                            }
+                                            // DO NOT close the console, even if the prover session is terminated
+                                            // if (this.sessionTerminated()) {
+                                            //     this.dispose();
+                                            // }
                                             break;
                                         }
                                         case XTermEvent.proofExplorerBack:
