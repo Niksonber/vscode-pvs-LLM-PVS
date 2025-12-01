@@ -982,10 +982,11 @@ export class VSCodePvsWorkspaceExplorer extends Explorer { //implements TreeData
 	/**
 	 * Updates information about a given pvs context
 	 */
-	updateContextFolder (desc: PvsContextDescriptor, opt?: { tccDescriptor?: boolean }): void {
+	updateContextFolder (desc: PvsContextDescriptor, opt?: { tccDescriptor?: boolean, theoriesFromActiveFile?: boolean }): void {
 		if (desc?.contextFolder) {
-			const theoriesFromSelectedFile: boolean = vscodeUtils.getConfigurationFlag("pvs.pvsWorkspaceTheoriesFromActiveFile");
-			if (theoriesFromSelectedFile) {
+			// const theoriesFromActiveFile: boolean = vscodeUtils.getConfigurationFlag("pvs.pvsWorkspaceTheoriesFromActiveFile");
+			if (opt?.theoriesFromActiveFile) {
+				// slim down the descriptor and keep only the theories from the active file
 				const activePvsFile: TextDocument = getActivePvsFile();
 				if (activePvsFile) {
 					const activeDesc: PvsFile = fsUtils.fname2desc(activePvsFile?.fileName || this.activeFile);

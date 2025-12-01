@@ -1339,7 +1339,7 @@ function resource2desc (resource: string | {
  */
 export function getVisiblePvsEditors (): vscode.TextEditor[] {
     const visiblePvsEditors: vscode.TextEditor[] = vscode.window.visibleTextEditors?.filter(editor => {
-        return editor?.document?.languageId === "pvs";
+        return editor?.document?.languageId === "pvs" || editor?.document?.fileName?.endsWith(".summary");
     });
     return visiblePvsEditors || [];
 }
@@ -1355,7 +1355,7 @@ export function getActivePvsEditor (): vscode.TextEditor {
     // else, return the first visible pvs editor
     const visiblePvsEditors: vscode.TextEditor[] = getVisiblePvsEditors();
     const visible: vscode.TextEditor = visiblePvsEditors?.length ? visiblePvsEditors[0] : null;
-    return visible?.document?.fileName?.endsWith("pvs") ? visible : null;
+    return visible?.document?.fileName?.endsWith(".pvs") || visible?.document?.fileName?.endsWith(".summary") ? visible : null;
 }
 
 /**

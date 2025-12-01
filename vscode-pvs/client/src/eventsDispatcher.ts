@@ -100,6 +100,7 @@ export class EventsDispatcher {
     protected inChecker: boolean = false;
     protected inEvaluator: boolean = false;
     protected quietMode: boolean = false;
+    protected showTheoriesFromActiveFile: boolean = true;
 
     protected NOTIFICATION_TIMEOUT: number = 2000; // 2sec
 
@@ -219,7 +220,7 @@ export class EventsDispatcher {
 		this.client.onRequest(serverEvent.contextUpdate, (desc: PvsContextDescriptor) => {
 		  console.log(`[${fsUtils.generateTimestamp()}] `+`[eventsDispatcher] responding request ${serverEvent.contextUpdate} - param: ${JSON.stringify(desc)} `); // #DEBUG
 			if (this.workspaceExplorer) {
-				this.workspaceExplorer.updateContextFolder(desc);
+				this.workspaceExplorer.updateContextFolder(desc, { theoriesFromActiveFile: this.showTheoriesFromActiveFile });
 			}
 		});
 		this.client.onRequest(serverEvent.latexTheoriesResponse, (desc: { 
@@ -270,20 +271,16 @@ export class EventsDispatcher {
             }
         }) => {
             if (this.workspaceExplorer && desc?.response) {
-                this.workspaceExplorer.updateContextFolder(desc.response, { tccDescriptor: true });
+                this.workspaceExplorer.updateContextFolder(desc.response, { tccDescriptor: true, theoriesFromActiveFile: this.showTheoriesFromActiveFile });
             }
         });
         this.client.onRequest(serverRequest.showTccs, (desc: { 
             response: PvsContextDescriptor, 
-            args: { 
-                fileName: string, 
-                fileExtension: string, 
-                contextFolder: string 
-            }
+            args: FileDescriptor
         }) => {
             console.log(`[${fsUtils.generateTimestamp()}] `+`[eventsDispatcher] responding request ${serverRequest.showTccs} - param: ${desc} `); // #DEBUG            
             if (this.workspaceExplorer && desc?.response) {
-                this.workspaceExplorer.updateContextFolder(desc.response, { tccDescriptor: true });
+                this.workspaceExplorer.updateContextFolder(desc.response, { tccDescriptor: true, theoriesFromActiveFile: this.showTheoriesFromActiveFile });
             }
             if (desc?.args?.fileName && desc?.args?.contextFolder && desc?.response) {
                 // open tcc file in the editor
@@ -619,7 +616,10 @@ export class EventsDispatcher {
         });
 
 		this.client.onNotification(serverRequest.getContextDescriptor, (desc: PvsContextDescriptor) => {
-            this.workspaceExplorer?.updateContextFolder(desc);
+            this.showTheoriesFromActiveFile = vscodeUtils.getConfigurationFlag("pvs.pvsWorkspaceTheoriesFromActiveFile");
+            // publish variable in the global space that can be useful for enabling WorkspaceExplorer inline commands defined in package.json
+            vscode.commands.executeCommand('setContext', 'theories-from-active-file', this.showTheoriesFromActiveFile);
+            this.workspaceExplorer?.updateContextFolder(desc, { theoriesFromActiveFile: this.showTheoriesFromActiveFile });
         });
 
 		// this.client.onRequest(serverEvent.querySaveProof, async (request: {
@@ -1795,7 +1795,7 @@ export class EventsDispatcher {
                         }
                     }) => {
                         if (this.workspaceExplorer && desc?.response) {
-                            this.workspaceExplorer.updateContextFolder(desc.response, { tccDescriptor: true });
+                            this.workspaceExplorer.updateContextFolder(desc.response, { tccDescriptor: true, theoriesFromActiveFile: this.showTheoriesFromActiveFile });
                         }
                     });            
                 }
