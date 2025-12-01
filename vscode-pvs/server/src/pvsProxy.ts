@@ -561,6 +561,10 @@ export class PvsProxy {
 			// Should check for valid JSON-RPC,
 			console.log(`[${fsUtils.generateTimestamp()}] `+'[pvsProxy.startWebSocket] webSocket.on message: ', JSON.stringify(this.pendingRequests)); // debug
 			console.log(`[${fsUtils.generateTimestamp()}] `+'[pvsProxy.startWebSocket]  obj = ', obj); // debug
+			// show some action in the status bar, so the user knows what is going on
+			if (obj?.message && typeof obj.message === "string") {
+				this.connection?.sendNotification("server.status.progress", { msg: obj.message });
+			}
 			if (obj.type === "send-token") {
 				console.log("Received new session token from remove server");
 				if (obj.token_str) {
@@ -1352,12 +1356,41 @@ export class PvsProxy {
 		let ans: PvsFormula[] = [];
 		if (desc) {
 			let theories: TheoryDescriptor[] = (opt.includeImportChain) ? await this.getImportChain(desc) : [desc];
-			if (theories && theories.length) {
-				for(const theory of theories){
-					const thForms = (opt.tccsOnly?
-						theory.theorems.filter((value)=>{return (value.isTcc?value:undefined)}) : 
-						theory.theorems);
-					ans = ans.concat(thForms);
+			// if (theories && theories.length) {
+			// 	for(const theory of theories){
+			// 		const thForms = (opt.tccsOnly?
+			// 			theory.theorems.filter((value)=>{return (value.isTcc?value:undefined)}) : 
+			// 			theory.theorems);
+			// 		ans = ans.concat(thForms);
+			// 	}
+			// }
+			for (let i = 0; i < theories?.length; i++) {
+				if (!opt.tccsOnly) {
+					const formulaDescriptors: FormulaDescriptor[] = await fsUtils.listTheoremsInFile(fsUtils.desc2fname(theories[i]));
+					if (formulaDescriptors && formulaDescriptors.length) {
+						const theorems: FormulaDescriptor[] = formulaDescriptors.filter(formula => {
+							return formula.theoryName === desc.theoryName;
+						});
+						if (theorems && theorems.length) {
+							ans = ans.concat(theorems);
+						}
+					}
+				}
+				// generate tccs for the given theory
+				const tccsResponse: PvsResponse = await this.generateTccsFile(theories[i]);
+				if (tccsResponse && tccsResponse.result) {
+					const tccsResult: ShowTCCsResult = <ShowTCCsResult> tccsResponse.result;
+					for (let j = 0; j < tccsResult.length; j++) {
+						if (tccsResult[j].id) {
+							ans.push({
+								formulaName: tccsResult[j].id,
+								theoryName: theories[i].theoryName,
+								fileName: theories[i].fileName,
+								contextFolder: theories[i].contextFolder,
+								fileExtension: ".tccs" //theories[i].fileExtension
+							});
+						}
+					}
 				}
 			}
 		}
@@ -1873,7 +1906,9 @@ export class PvsProxy {
 						showExpandedSequent ? `(lisp (format nil "Expanded sequent: ~%~a" (replace-string (with-output-to-string (*standard-output*) (show-expanded-sequent${languageUtils.isShowFullyExpandedSequentCommand(desc.cmd) ? " t" : ""})) "C-u M-x show-expanded-sequent" "'show-expanded-sequent t'")))` :
 					desc.cmd ;
 				const pid: string = desc.proofId;
-				res = await this.pvsRequest('proof-command', [pid, cmd]);				
+				res = await this.pvsRequest('proof-command', [pid, cmd]);
+				// console.log(`[PvsProxy.proofCommand] cmd = ${cmd}`);
+				// console.log(`[PvsProxy.proofCommand] res = ${JSON.stringify(res || {})}`);
 				if (res && res.result) {
 					const proofStates: PvsProofState[] = res.result;
 					if (showHidden) {
