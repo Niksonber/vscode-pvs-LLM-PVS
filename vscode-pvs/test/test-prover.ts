@@ -262,8 +262,10 @@ describe("pvs-prover", () => {
         if (proverStatus != undefined){
             expect(proverStatus.result).not.to.be.undefined;
             expect(proverStatus.error).to.be.undefined;
-            if (proverStatus.result != undefined )
+            if (proverStatus.result != undefined ) {
+                // @ts-ignore
                 expect(proverStatus.result[0].status.toLocaleLowerCase()).to.equal("quit");
+            }
         }
     }).timeout(60000);
 
@@ -310,8 +312,10 @@ describe("pvs-prover", () => {
         if (proverStatus != undefined){
             expect(proverStatus.result).not.to.be.undefined;
             expect(proverStatus.error).to.be.undefined;
-            if (proverStatus.result != undefined )
+            if (proverStatus.result != undefined) {
+                // @ts-ignore
                 expect(proverStatus.result[0].status).to.equal("quit");
+            }
         }
     }).timeout(10000);
 
