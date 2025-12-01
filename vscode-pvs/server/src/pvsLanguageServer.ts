@@ -1112,7 +1112,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 		if (request && this.pvsProxy) {
 			opt = opt || {};
 			const desc: FileDescriptor = (typeof request === "string") ? fsUtils.fname2desc(request) : request;
-			if (desc) {
+			if (desc?.contextFolder && desc?.fileName) {
 				const fname: string = fsUtils.desc2fname({
 					contextFolder: desc.contextFolder,
 					fileName: desc.fileName,
@@ -1155,7 +1155,7 @@ export class PvsLanguageServer extends fsUtils.PostTask {
 					this.notifyEndImportantTask({ id: taskId, msg });
 				}
 			} else {
-				console.error("[pvs-language-server] Warning: pvs.generate-tccs is unable to identify filename for ", request);
+				console.error("[pvs-language-server] Warning: pvs.generate-tccs is unable to identify filename or context folder for ", request);
 			}
 		} else {
 			console.error("[pvs-language-server] Warning: pvs.generate-tccs invoked with null request");
