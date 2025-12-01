@@ -495,8 +495,12 @@ export class PvsProofExplorer {
 				for (let i = 0; i < affectedProofStates.length; i++) {
 					const currCmd: string = response.result[0]["curr-cmd"];
 					const proofState: PvsProofState = response.result[i]; // process proof commands
-					if (i === 0) { await this.checkProofTermination({ proofState, args: command }, opt); }
-					if (i > 0 || affectedProofStates.length === 1) {
+					// if (i === 0) { await this.checkProofTermination({ proofState, args: command }, opt); }
+					// if (i > 0 || affectedProofStates.length === 1) {
+					// 	await this.onStepExecuted({ proofState, currCmd, args: command, lastSequent: i === affectedProofStates.length - 1 }, opt);
+					// }
+					const qed: boolean = await this.checkProofTermination({ proofState, args: command }, opt);
+					if (!qed && (affectedProofStates.length === 1 || i > 0)) {
 						await this.onStepExecuted({ proofState, currCmd, args: command, lastSequent: i === affectedProofStates.length - 1 }, opt);
 					}
 				}
@@ -1003,7 +1007,7 @@ export class PvsProofExplorer {
 			// get command and proof state
 			let userCmd: string = desc.args ? desc.args.cmd : null; // command entered by the user
 			const currCmd: string = desc.proofState["curr-cmd"];
-			const cmd: string = currCmd || userCmd;
+			const cmd: string = isSameCommand("(propax)", currCmd) ? userCmd : (currCmd || userCmd);
 			this.mrpProofState = desc.proofState;
 			
 			// identify active node in the proof tree
@@ -1230,7 +1234,7 @@ export class PvsProofExplorer {
 						// mark the target node as active
 						this.markAsActive({ selected: targetNode });
 						// window.showInformationMessage(msg);
-						const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
+						const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] && this.mrpProofState.children?.length > 0 ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
 						this.moveIndicatorForward({ keepSameBranch: true, targetPSDisplayId, branchComplete: branchCompleted });
 					} else {
 						console.error(`[proof-explorer] Error: could not find branch ${currentBranchName} in the proof tree. Proof Explorer is out of sync with PVS. Please restart the proof.`);
@@ -1320,7 +1324,7 @@ export class PvsProofExplorer {
 							this.cutTreeX({ action: "cut-tree", selected: activeNode, keepRoot: true });
 						}
 						// move indicator forward
-						const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
+						const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] && this.mrpProofState.children?.length > 0 ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
 						this.moveIndicatorForward({ keepSameBranch: true, targetPSDisplayId, branchComplete: branchCompleted });
 						// mark the sub tree of the invalid node as not visited
 						activeNode.treeNotVisited();
@@ -1333,7 +1337,7 @@ export class PvsProofExplorer {
 					// here we need to check both command and userCmd, as pvs may clean up the command, eg., (hide 01) is returned as (hide 1)
 					if ((isSameCommand(activeNode.name, command) || isSameCommand(activeNode.name, userCmd) || isSameCommand(activeNode.name, cmd))
 							&& !this.ghostNode.isActive()) {
-						const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
+						const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] && this.mrpProofState.children?.length > 0 ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
 						this.moveIndicatorForward({ keepSameBranch: true, targetPSDisplayId, branchComplete: branchCompleted });						
 						// mark the sub tree of the invalid node as not visited
 						activeNode.treeNotVisited();
@@ -1432,7 +1436,7 @@ export class PvsProofExplorer {
 					}
 
 					// finally, move indicator forward and propagate tooltip to the new active node
-					const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
+					const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] && this.mrpProofState.children?.length > 0 ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
 					this.moveIndicatorForward({ keepSameBranch: true, targetPSDisplayId, branchComplete: branchCompleted });
 				}
 			}
@@ -1835,7 +1839,7 @@ export class PvsProofExplorer {
 				// unless the provided proof state do not incorporate any information into
 				// the proof explorer.
 				if(doNotMoveForward===undefined || !doNotMoveForward){
-					const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
+					const targetPSDisplayId: string = this.mrpProofState['curr-cmd'] && this.mrpProofState.children?.length > 0 ? this.mrpProofState.children[0] : this.mrpProofState['display-id'];
 					const destinationNode: ProofItem = this.moveIndicatorForward({ keepSameBranch: true, targetPSDisplayId: targetPSDisplayId, branchComplete: branchCompleted });
 					if(!this.mrpProofState['curr-cmd']){
 						destinationNode.updateSequent(this.mrpProofState, { internalAction: false });

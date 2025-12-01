@@ -2,10 +2,13 @@ import * as fsUtils from "../server/src/common/fsUtils";
 import { configFile, label, sandboxExamples } from './test.utils';
 import * as path from 'path';
 import { PvsProofExplorer } from "../server/src/providers/pvsProofExplorer";
-import { ProofNodeX, ProofStatus, PvsFormula, PvsProofCommand /*, SequentDescriptor*/ } from "../server/src/common/serverInterface";
+import { ProofNodeX, ProofStatus, PvsFormula, PvsProofCommand, /*, SequentDescriptor*/ 
+PvsProofState} from "../server/src/common/serverInterface";
 import { PvsLanguageServer, PvsServerDescriptor } from "../server/src/pvsLanguageServer";
 import { PvsResponse, PvsResult } from "../server/src/common/pvs-gui";
 import { expect } from 'chai';
+import { getProofId, PvsProxy } from "../server/src/pvsProxy";
+import { isQEDProofState } from "../server/src/common/languageUtils";
 
 //----------------------------
 //   Test cases for checking behavior of pvs with corrupted .pvscontext
@@ -536,5 +539,57 @@ describe("proof-explorer", () => {
         // console.dir(status, { depth: null});
         expect(node).not.to.be.undefined;
     });
+
+    it(`can handle corner cases with (propax)`, async () => {
+        const pvsProxy: PvsProxy = server.getPvsProxy();
+        let proverStatus: PvsResult = await pvsProxy?.pvsRequest('prover-status'); // await pvsProxy.getProverStatus();		
+        // quit all proofs, in case some were still active
+        if (proverStatus && proverStatus.result !== "inactive") {
+            await pvsProxy?.quitAllProofs();
+        }
+
+        const formula: PvsFormula = {
+            contextFolder: path.join(__dirname, "nasalib/ACCoRD"),
+            fileExtension: ".pvs",
+            fileName: "cd2d_shape",
+            theoryName: "cd2d_shape",
+            formulaName: "cd2d_haz_correctness"
+        };
+
+        // start new proof
+        await server.proveFormulaRequest(formula);
+        const proofExplorer: PvsProofExplorer = server.getProofExplorer();
+
+        const cmds: string[] = [
+            `(SKEEP)`,
+            `(BETA)`,
+            `(LEMMA "cd2d_haz_soundness")`,
+            `(INSTEEP)`,
+            `(BETA)`,
+            `(LEMMA "cd2d_haz_completeness")`,
+            `(INSTEEP)`,
+            `(BETA)`,
+            `(SPLIT 1)`
+            // (PROPAX)(PROPAX)
+        ]
+        for (let i = 0; i < cmds.length; i++) {
+            console.log(`>>> Sending command ${cmds[i]}`);
+            request.cmd = cmds[i];
+            await proofExplorer.proofCommandRequest(request);
+        }
+
+        const root: ProofNodeX = proofExplorer.getProofX();
+        expect(root.name).to.deep.equal(formula.formulaName);
+
+        const status: ProofStatus = proofExplorer.getProofStatus();
+        expect(status).to.be.deep.equal("proved");
+        console.log({ status });
+
+        console.dir({ rules: root.rules });
+        expect(root.rules.length).to.be.equal(cmds.length);
+        for (let i = 0; i < cmds.length; i++) {
+            expect(root.rules[i].name).to.be.deep.equal(cmds[i])
+        }
+    }).timeout(80000);
 });
 
