@@ -2301,7 +2301,7 @@ function sequentToString(sequents: SFormula[], opt?: {
 	const color: PvsColor = getColor(PvsColor.green, colorTheme);
 	for (let i = 0; i < sequents.length; i++) {
 		const sequent: SFormula = sequents[i];
-		let label: string = sequent.labels.join(" ");
+		let label: string = sequent.labels.join(", ");
 		label = (sequent.changed === 'true') ? `{${label}}` : `[${label}]` ;
 		label = (sequent.changed === 'true' && opt.useColors) ? `${colorText(label, color)}` : `${label}` ;
 		let fmla: string = tryPrettyPrintFormula(sequent.formula, opt?.prettyPrinter);

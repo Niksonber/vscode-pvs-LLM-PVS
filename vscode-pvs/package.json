@@ -1,7 +1,7 @@
 {
 	"name": "vscode-pvs",
 	"description": "Integrates the PVS theorem proving system into Visual Studio Code",
-	"version": "1.0.66-eta-202511201247",
+	"version": "1.0.66-eta-202512041535",
 	"author": "NASA LaRC Formal Methods Team",
 	"displayName": "PVS",
 	"icon": "icons/pvs-icon-alt.png",
