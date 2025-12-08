@@ -562,7 +562,8 @@ export class PvsProxy {
 			console.log(`[${fsUtils.generateTimestamp()}] `+'[pvsProxy.startWebSocket] webSocket.on message: ', JSON.stringify(this.pendingRequests)); // debug
 			console.log(`[${fsUtils.generateTimestamp()}] `+'[pvsProxy.startWebSocket]  obj = ', obj); // debug
 			// show some action in the status bar, so the user knows what is going on
-			if (obj?.message && typeof obj.message === "string") {
+			if (obj?.message && typeof obj.message === "string" 
+					&& !(obj.message.toLocaleLowerCase().includes("parsing") || obj.message.toLocaleLowerCase().includes("parsed"))) { // exclude parsing messages, as these are generated quite often and parsing is almost instantaneous
 				this.connection?.sendNotification("server.status.progress", { msg: obj.message });
 			}
 			if (obj.type === "send-token") {
