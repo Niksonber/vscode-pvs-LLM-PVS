@@ -880,57 +880,58 @@ export class EventsDispatcher {
         }));
         context.subscriptions.push(commands.registerCommand("vscode-pvs.report-issue", async () => {
             this.client.outputChannel.show(false);
-            await vscode?.commands.executeCommand("workbench.action.output.toggleOutput", true);
-            await vscode?.commands.executeCommand("workbench.action.openActiveLogOutputFile");
-            await vscode?.commands.executeCommand("copyRelativeFilePath");
-            await vscode?.commands.executeCommand("workbench.action.closeActiveEditor");
-            await vscode?.commands.executeCommand("workbench.action.closePanel");
-
-            const vscodeConsoleTempFile = await vscode.env.clipboard.readText();
+            await vscode.commands.executeCommand("workbench.action.output.toggleOutput", true);
+            await vscode.commands.executeCommand("workbench.action.openActiveLogOutputFile");
+            await vscode.commands.executeCommand("copyRelativeFilePath");
+            await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+            await vscode.commands.executeCommand("workbench.action.closePanel");
+            this.client.outputChannel.show(false);
             
             // @M3 Since version 8.0, PVS stores log information in the 
             //     folder ~/.pvslog, let's use the same folder to store
             //     our log file.
             const logFolder: string = path.join(fsUtils.HOME_DIR, ".pvslog");
-            const date: Date = new Date();
-            const vscodePvsLogFile: string = path.join(logFolder, `vscode-pvs-${date.getFullYear() + ("0" + (date.getMonth() + 1)).slice(-2) + ("0" + date.getDate()).slice(-2) + ("0" + date.getHours() ).slice(-2) + ("0" + date.getMinutes()).slice(-2) + ("0" + date.getSeconds()).slice(-2)}.log`);
-            fsUtils.createFolder(logFolder);
-            fsUtils.copyFile(vscodeConsoleTempFile, vscodePvsLogFile);
+            const vscodePvsLogFile: string = await vscode.env.clipboard.readText();
 
             // @M3 get latest PVS log file
-            var pvsLogFile: string = undefined;
-            const files = fs.readdirSync(logFolder);
-            const filteredFiles = files
-            .filter(file => new RegExp("pvs-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\.log").test(file))
-            .map(file => {
+            const files: string[] = fs.readdirSync(logFolder);
+            const filteredFiles: { file: string; mtime: Date; }[] = files.filter(file => new RegExp(
+                "pvs-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\.log"
+            ).test(file)).map(file => {
                 const filePath = path.join(logFolder, file);
                 const stats = fs.statSync(filePath);
                 return { file, mtime: stats.mtime };
             });
-
-            if (filteredFiles.length > 0) { 
-                pvsLogFile = filteredFiles.reduce((prev, curr) => {
+            const pvsLogFileName: string = (filteredFiles.length > 0) ? filteredFiles.reduce((prev, curr) => {
                     return (prev.mtime > curr.mtime) ? prev : curr;
-                }).file;
+            }).file : null;
+            const pvsLogFile: string = pvsLogFileName ? path.join(logFolder, pvsLogFileName) : null;
 
-                pvsLogFile = path.join(logFolder, pvsLogFile)
-            }
-
-            const openLogBtnLbl: string = `Open log ${pvsLogFile !== undefined? "files": "file"}...`;
-
+            const ok: string = "Ok";
             const item = await window.showInformationMessage(`Report Issue                                                              `, {
                 modal: true,
-                detail: `Please send a brief description of the issue along with the following ${pvsLogFile !== undefined? "files": "file"}: \n\n• ${vscodePvsLogFile}\n${pvsLogFile !== undefined? `• ${pvsLogFile}\n`: ""}\nto\n\n mariano.m.moscato@nasa.gov\n\nDisclaimer: the logs could contain information about the system, such as name of the theories you were working on, location of PVS files in your installation, etc. Please review the log ${pvsLogFile !== undefined? "files": "file"} before sending ${pvsLogFile !== undefined? "them": "it"} and remove any information you do not want to share. No guarantee that issues would be addressed should be assumed.`
-            }, { isCloseAffordance: true, title: "OK" },
-            { isCloseAffordance: false, title: openLogBtnLbl });
+                detail: 
+`Please send a brief description of the issue, along with the following log ${pvsLogFile ? "files": "file"} (which will now be opened in the editor):
 
-            if (item.title === openLogBtnLbl) {
-                const uri: vscode.Uri = vscode.Uri.file(vscodePvsLogFile);
-                const vscodePvsLogDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(uri);
-                await vscode.languages.setTextDocumentLanguage(vscodePvsLogDocument, "log");
-                vscode.window.showTextDocument(vscodePvsLogDocument, { viewColumn: vscode.ViewColumn.Active, preserveFocus: true, preview: false });
+• ${vscodePvsLogFile}
+${pvsLogFile ? `• ${pvsLogFileName}
+`: ""}
 
-                if (pvsLogFile !== undefined) {
+to
+
+mariano.m.moscato@nasa.gov
+
+Disclaimer: the logs could contain information about the system, such as name of the theories you were working on, location of PVS files in your installation, etc. Please review the log ${pvsLogFile ?
+    "files": "file"} before sending ${pvsLogFile ? "them": "it"} and remove any information you do not want to share. No guarantee that issues would be addressed should be assumed.`
+            }, ok);//{ isCloseAffordance: true, title: "Ok" });
+
+            if (item === ok) {
+                // open vscode-pvs output channel as an editor window
+                this.client.outputChannel.show(true);
+                await vscode.commands.executeCommand("workbench.action.openActiveLogOutputFile");
+                this.client.outputChannel.hide();
+                // open pvs log file, if any
+                if (pvsLogFile) {
                     const pvsLogDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(vscode.Uri.file(pvsLogFile));
                     await vscode.languages.setTextDocumentLanguage(pvsLogDocument, "log");
                     vscode.window.showTextDocument(pvsLogDocument, { viewColumn: vscode.ViewColumn.Active, preserveFocus: true, preview: false });
