@@ -1015,7 +1015,7 @@ export async function getPvsWorkspace (resource: ContextFolder | WorkspaceOvervi
  * Utility function, shows a welcome message with the release notes of vscode-pvs
  */
 export function showReleaseNotes (): void {
-    const fileUri: vscode.Uri = vscode.Uri.file(path.join(__dirname, "..", "..", "..", "WELCOME.md"));
+    const fileUri: vscode.Uri = vscode.Uri.file(path.join(__dirname, "..", "..", "..", "README.md"));
     vscode.commands.executeCommand('markdown.showPreview', fileUri);
 }
 
