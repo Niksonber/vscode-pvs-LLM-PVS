@@ -1,11 +1,11 @@
-# LLM-PVS VS Code Extension
+# LLM-PVS
 
+This guide covers the installation of the VS Code extension and the setup of the local LLM for PVS proof-command suggestions
 
-This guide covers the installation of the VS Code extension and the setup of the local LLM for proof-step suggestion
+## Virtual Machine
 
-## Using VM
-You can try the integration using the virtualbox VM of link 
-[Virtualbox LLM-PVS](https://drive.google.com/drive/folders/1yvyq5Y9mGQVm653u98g0CBUZKIZZoD2l?usp=sharing)
+You can try LLM-PVS using the VirtualBox VM downloadable from 
+[here](https://drive.google.com/drive/folders/1yvyq5Y9mGQVm653u98g0CBUZKIZZoD2l?usp=sharing)
 
 ## Prerequisites
 
@@ -18,13 +18,13 @@ You can try the integration using the virtualbox VM of link
 
 ### 1. Install Visual Studio Code
 
-If you haven't already, download and install **Visual Studio Code**:
+Download and install **Visual Studio Code**:
 
 * [Download VS Code](https://code.visualstudio.com/)
 
 ### 2. Install the Extension (.vsix)
 
-The extension is provided as a compiled `.vsix` file located in the `release` folder of this repository [.vsix](releases/vscode-pvs-1.0.70-eta-202509201656-llama.vsix).
+The extension is provided as a compiled `.vsix` file located in the `releases` folder of this repository [.vsix](releases/vscode-pvs-1.0.70-eta-202509201656-llama.vsix).
 
 1. Open Visual Studio Code.
 2. Go to the **Extensions** view by clicking the square icon on the left sidebar (or press `Ctrl+Shift+X`).
@@ -48,22 +48,11 @@ python -m venv venv
 
 
 3. Activate the environment:
-* **Windows:**
-```bash
-.\venv\Scripts\activate
 
-```
-
-
-* **Linux/macOS:**
 ```bash
 source venv/bin/activate
 
 ```
-
-
-
-
 
 ### 4. Install llama-cpp-server Dependencies
 
