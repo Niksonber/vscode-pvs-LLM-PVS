@@ -1,0 +1,6 @@
+numpy
+fastapi[standard]
+uvicorn
+ninja
+llama-cpp-python
+
