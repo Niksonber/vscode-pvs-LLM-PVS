@@ -89,6 +89,7 @@ uvicorn server:app --port 8085
 
 ## How to Use
 See also the illustration of the [integration file](LLM_PVS_Integration.pdf)
+
 2. **Open PVS Project:** Open your PVS files (`.pvs`) in VS Code. (preferred some sorting file from the nasalib sorting)
 3. **Interact:** Use the provided commands or sidebar interface (if applicable) to send snippets to the LLM for proof assistance or explanation.
 4. **Configuration:** If the server is running on a different port or host, update the extension settings in VS Code (`File > Preferences > Settings > LLM-PVS`).
