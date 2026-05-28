@@ -99,3 +99,7 @@ See also the illustration of the [integration file](LLM_PVS_Integration.pdf)
 * **Server Connection:** If the extension cannot communicate with the LLM, check if `http://localhost:8000/docs` is accessible in your browser.
 * **Performance:** If the LLM is slow, ensure you are using a model size appropriate for your RAM/VRAM.
 * **PVS Errors:** Ensure that the `pvs` executable is in your system PATH.
+
+  ## Related documents
+
+Read [an extended version of the integration](LLM_PVS_Integration_ExtVer.pdf)
